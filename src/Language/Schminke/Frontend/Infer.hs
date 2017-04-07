@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Infer
+module Language.Schminke.Frontend.Infer
   ( Constraint
   , TypeError(..)
   , Subst(..)
@@ -10,9 +10,9 @@ module Infer
   , constraintsExpr
   ) where
 
-import Env
-import Syntax
-import Type
+import Language.Schminke.Frontend.Env as Env
+import Language.Schminke.Frontend.Syntax
+import Language.Schminke.Frontend.Type
 
 import Control.Monad.Except
 import Control.Monad.Identity

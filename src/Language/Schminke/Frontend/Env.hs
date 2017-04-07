@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Env
+module Language.Schminke.Frontend.Env
   ( Env(..)
   , empty
   , lookup
@@ -20,8 +20,8 @@ import qualified Data.Map as Map
 import Data.Monoid
 import Prelude hiding (lookup)
 
-import Syntax
-import Type
+import Language.Schminke.Frontend.Syntax
+import Language.Schminke.Frontend.Type
 
 data Env = TypeEnv
   { types :: Map.Map Name Scheme

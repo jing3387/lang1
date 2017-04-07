@@ -1,4 +1,4 @@
-module Syntax where
+module Language.Schminke.Frontend.Syntax where
 
 type Name = String
 

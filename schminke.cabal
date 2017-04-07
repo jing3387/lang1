@@ -8,20 +8,22 @@ license-file:        LICENSE
 author:              Jarrod Jeffrey Ingram
 maintainer:          jarrod.jeffi@gmail.com
 copyright:           Copyright Jarrod Jeffrey Ingram (c) 2017
-category:            Compiler, Language
+category:            Language, Compiler
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Parser
-                     , Env
-                     , Infer
-                     , Pretty
-  other-modules:       Lexer
-                     , Syntax
-                     , Type
+  exposed-modules:     Language.Schminke
+                     , Language.Schminke.Frontend
+                     , Language.Schminke.Frontend.Parser
+                     , Language.Schminke.Frontend.Env
+                     , Language.Schminke.Frontend.Infer
+                     , Language.Schminke.Frontend.Pretty
+  other-modules:       Language.Schminke.Frontend.Lexer
+                     , Language.Schminke.Frontend.Syntax
+                     , Language.Schminke.Frontend.Type
   build-depends:       base >= 4.7 && < 5
                      , mtl
                      , text

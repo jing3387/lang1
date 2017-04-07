@@ -1,4 +1,4 @@
-module Type where
+module Language.Schminke.Frontend.Type where
 
 newtype TVar =
   TV String

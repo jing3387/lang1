@@ -1,4 +1,4 @@
-module Lexer where
+module Language.Schminke.Frontend.Lexer where
 
 import Data.Functor.Identity
 import qualified Data.Text.Lazy as L

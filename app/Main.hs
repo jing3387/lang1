@@ -14,10 +14,8 @@ import System.Console.Repline
 import System.Environment
 import System.Exit
 
-import Env
-import Infer
-import Parser
-import Pretty
+import Language.Schminke
+import Language.Schminke.Frontend.Env as Env
 
 data IState = IState
   { tyctx :: Env.Env

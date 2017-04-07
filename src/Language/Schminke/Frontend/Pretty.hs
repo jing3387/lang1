@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
-module Pretty
+module Language.Schminke.Frontend.Pretty
   ( ppconstraint
   , ppconstraints
   , ppenv
@@ -11,10 +11,10 @@ module Pretty
   , pptype
   ) where
 
-import Env
-import Infer
-import Syntax
-import Type
+import Language.Schminke.Frontend.Env
+import Language.Schminke.Frontend.Infer
+import Language.Schminke.Frontend.Syntax
+import Language.Schminke.Frontend.Type
 
 import qualified Data.Map as Map
 import Text.PrettyPrint

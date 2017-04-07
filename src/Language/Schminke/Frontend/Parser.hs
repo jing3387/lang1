@@ -1,4 +1,4 @@
-module Parser
+module Language.Schminke.Frontend.Parser
   ( parseExpr
   , parseModule
   ) where
@@ -10,8 +10,8 @@ import qualified Text.Parsec.Expr as Ex
 import Text.Parsec.Text.Lazy (Parser)
 import qualified Text.Parsec.Token as Tok
 
-import Lexer
-import Syntax
+import Language.Schminke.Frontend.Lexer
+import Language.Schminke.Frontend.Syntax
 
 int :: Parser Expr
 int = do

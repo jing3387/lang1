@@ -51,5 +51,15 @@ spec = do
               (Lam "x" (Var "x")))
            (Lit (Int 0)))
     context "when provided with invalid input" $ do
+      it "should not parse an unmatched left parenthesis" $
+        parse expression "" `shouldFailOn` (L.pack "(")
+      it "should not parse an unmatched right parenthesis" $
+        parse expression "" `shouldFailOn` (L.pack ")")
+      it "should not parse a floating-point number" $
+        parse expression "" `shouldFailOn` (L.pack "0.0")
       it "should not parse an empty list" $
         parse expression "" `shouldFailOn` (L.pack "()")
+      it "should not parse an empty lambda expression" $
+        parse expression "" `shouldFailOn` (L.pack "(lambda ())")
+      it "should not parse an empty let expression" $
+        parse expression "" `shouldFailOn` (L.pack "(let ())")

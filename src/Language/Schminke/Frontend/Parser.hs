@@ -1,14 +1,11 @@
 module Language.Schminke.Frontend.Parser
-  ( parseExpr
-  , parseModule
+  ( expression
+  , program
   ) where
 
-import qualified Data.Map as Map
 import qualified Data.Text.Lazy as L
-import Text.Parsec
-import qualified Text.Parsec.Expr as Ex
-import Text.Parsec.Text.Lazy (Parser)
-import qualified Text.Parsec.Token as Tok
+import Text.Megaparsec
+import Text.Megaparsec.Text.Lazy
 
 import Language.Schminke.Frontend.Lexer
 import Language.Schminke.Frontend.Syntax
@@ -27,7 +24,7 @@ lambda :: Parser Expr
 lambda = do
   reserved "lambda"
   formals <- parens $ many identifier
-  body <- expression
+  body <- expr
   return $ foldr Lam body formals
 
 let' :: Parser Expr
@@ -37,30 +34,30 @@ let' = do
     parens $
     many $
     parens $ do
-      ident <- identifier
-      expr <- expression
-      return (ident, expr)
-  body <- expression
+      x <- identifier
+      e <- expr
+      return (x, e)
+  body <- expr
   return $ foldr (\(ident, expr) body -> Let ident expr body) body bindings
 
 app :: Parser Expr
 app = do
-  f <- expression
-  args <- many expression
+  f <- expr
+  args <- many expr
   return $ foldl App f args
 
-expression :: Parser Expr
-expression = do
-  es <- many1 $ int <|> var <|> parens (lambda <|> let' <|> app)
+expr :: Parser Expr
+expr = do
+  es <- some $ int <|> var <|> parens (lambda <|> let' <|> app)
   return (foldl1 App es)
 
 define :: Parser Def
 define =
   parens $ do
     reserved "define"
-    ident <- identifier
-    expr <- expression
-    return $ (ident, expr)
+    x <- identifier
+    e <- expr
+    return $ (x, e)
 
 val :: Parser Def
 val = do
@@ -73,8 +70,8 @@ top = try define <|> val
 modl :: Parser [Def]
 modl = many top
 
-parseExpr :: L.Text -> Either ParseError Expr
-parseExpr input = parse (contents expression) "<stdin>" input
+expression :: Parser Expr
+expression = between sc eof expr
 
-parseModule :: FilePath -> L.Text -> Either ParseError [Def]
-parseModule fname input = parse (contents modl) fname input
+program :: Parser [Def]
+program = between sc eof modl

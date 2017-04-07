@@ -1,53 +1,46 @@
 module Language.Schminke.Frontend.Lexer where
 
-import Data.Functor.Identity
-import qualified Data.Text.Lazy as L
-import Text.Parsec
-import qualified Text.Parsec.Expr as Ex
-import Text.Parsec.Text.Lazy
-import qualified Text.Parsec.Token as Tok
+import Control.Monad (void)
+import Text.Megaparsec
+import qualified Text.Megaparsec.Lexer as L
+import Text.Megaparsec.Text.Lazy
 
-symbols :: String
-symbols = "!$%&*+-./:<=>?@^_~"
+sc :: Parser ()
+sc = L.space (void spaceChar) lineCmnt blockCmnt
+  where
+    lineCmnt = L.skipLineComment ";"
+    blockCmnt = L.skipBlockComment "#|" "|#"
 
-reservedNames :: [String]
-reservedNames = ["define", "lambda", "let"]
+lexeme :: Parser a -> Parser a
+lexeme = L.lexeme sc
 
-lexer :: Tok.GenTokenParser L.Text () Identity
-lexer =
-  Tok.makeTokenParser $
-  Tok.LanguageDef
-  { Tok.commentStart = "#|"
-  , Tok.commentEnd = "|#"
-  , Tok.commentLine = ";"
-  , Tok.nestedComments = True
-  , Tok.identStart = letter <|> oneOf symbols
-  , Tok.identLetter = letter <|> oneOf symbols <|> digit
-  , Tok.opStart = oneOf ""
-  , Tok.opLetter = oneOf ""
-  , Tok.reservedNames = reservedNames
-  , Tok.reservedOpNames = []
-  , Tok.caseSensitive = True
-  }
-
-integer :: Parser Integer
-integer = Tok.integer lexer
-
-identifier :: Parser String
-identifier = Tok.identifier lexer
+symbol :: String -> Parser String
+symbol = L.symbol sc
 
 parens :: Parser a -> Parser a
-parens = Tok.parens lexer
+parens = between (symbol "(") (symbol ")")
+
+integer :: Parser Integer
+integer = lexeme L.integer
 
 reserved :: String -> Parser ()
-reserved = Tok.reserved lexer
+reserved w = string w *> notFollowedBy (alphaNumChar <|> symbolChar) *> sc
 
-reservedOp :: String -> Parser ()
-reservedOp = Tok.reservedOp lexer
+reservedWords :: [String]
+reservedWords = ["define", "lambda", "let"]
+
+reservedSymbols :: String
+reservedSymbols = "()"
+
+identifier :: Parser String
+identifier = (lexeme . try) (p >>= check)
+  where
+    p =
+      (:) <$> (letterChar <|> symbolChar) <*> many (alphaNumChar <|> symbolChar)
+    check x =
+      if x `elem` reservedWords
+        then fail $ "keyword " ++ show x ++ " cannot be an identifier"
+        else return x
 
 contents :: Parser a -> Parser a
-contents p = do
-  Tok.whiteSpace lexer
-  r <- p
-  eof
-  return r
+contents p = between sc eof p

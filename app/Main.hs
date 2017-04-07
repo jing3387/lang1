@@ -13,6 +13,7 @@ import qualified Data.Text.Lazy.IO as L
 import System.Console.Repline
 import System.Environment
 import System.Exit
+import Text.Megaparsec
 
 import Language.Schminke
 import Language.Schminke.Frontend.Env as Env
@@ -26,6 +27,14 @@ initState = IState Env.empty
 
 type Repl a = HaskelineT (StateT IState IO) a
 
+hoistParseErr
+  :: (Ord t, ShowToken t, ShowErrorComponent e)
+  => Either (ParseError t e) a -> Repl a
+hoistParseErr (Right val) = return val
+hoistParseErr (Left err) = do
+  liftIO $ putStr $ parseErrorPretty err
+  abort
+
 hoistErr
   :: Show e
   => Either e a -> Repl a
@@ -37,7 +46,7 @@ hoistErr (Left err) = do
 exec :: Bool -> L.Text -> Repl ()
 exec update source = do
   st <- get
-  mod <- hoistErr $ parseModule "<stdin>" source
+  mod <- hoistParseErr $ parse program "" source
   tyctx' <- hoistErr $ inferTop (tyctx st) mod
   let st' = st {tyctx = tyctx' <> tyctx st}
   when update (put st')

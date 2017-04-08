@@ -2,7 +2,10 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module Language.Schminke.Frontend.Pretty
-  ( ppconstraint
+  ( ppexpr
+  , ppdef
+  , ppprog
+  , ppconstraint
   , ppconstraints
   , ppenv
   , ppscheme
@@ -45,16 +48,22 @@ instance Pretty Scheme where
   ppr p (Forall ts t) =
     text "∀" <+> hcat (punctuate space (map (ppr p) ts)) <> text "." <+> ppr p t
 
-instance Pretty Expr where
-  ppr p (Var a) = ppr p a
-  ppr p (App a b) = parensIf (p > 0) $ ppr (p + 1) a <+> ppr p b
-  ppr p (Lam a b) = text "\\" <> ppr p a <+> text "->" <+> ppr p b
-  ppr p (Let a b c) =
-    text "let" <> ppr p a <+> text "=" <+> ppr p b <+> text "in" <+> ppr p c
-  ppr p (Lit a) = ppr p a
-
 instance Pretty Literal where
   ppr _ (Int i) = integer i
+
+instance Pretty Expr where
+  ppr p (Var x) = ppr p x
+  ppr p (Lit l) = ppr p l
+  ppr p (Lam x body) = parens $ text "lambda" <+> ppr p x $$ nest 1 (ppr p body)
+  ppr p (Let x e body) =
+    parens $ text "let" <+> parens (ppr p x <+> ppr p e) $$ nest 1 (ppr p body)
+  ppr p (App f arg) = parens $ ppr p f <+> ppr p arg
+
+instance Pretty Def where
+  ppr p (x, body) = parens $ text "define" <+> ppr p body
+
+instance Pretty Program where
+  ppr p (Program defs expr) = vcat (map (ppr p) defs ++ [ppr p expr])
 
 instance Pretty Constraint where
   ppr p (a, b) = (ppr p a) <+> text " ~ " <+> (ppr p b)
@@ -79,6 +88,15 @@ instance Show TypeError where
       | (a, b) <- cs
       ]
   show (UnboundVariable a) = "not in scope: " ++ a
+
+ppexpr :: Expr -> String
+ppexpr = render . ppr 0
+
+ppdef :: Def -> String
+ppdef = render . ppr 0
+
+ppprog :: Program -> String
+ppprog = render . ppr 0
 
 ppscheme :: Scheme -> String
 ppscheme = render . ppr 0

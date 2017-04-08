@@ -27,10 +27,19 @@ reserved :: String -> Parser ()
 reserved w = string w *> notFollowedBy (alphaNumChar <|> symbolChar) *> sc
 
 reservedWords :: [String]
-reservedWords = ["define", "lambda", "let"]
+reservedWords = ["define", "lambda", "let", "Int", "forall"]
 
 reservedSymbols :: String
 reservedSymbols = "()"
+
+tvId :: Parser String
+tvId = (lexeme . try) (p >>= check)
+  where
+    p = some lowerChar
+    check x =
+      if x `elem` reservedWords
+        then fail $ "keyword " ++ show x ++ " cannot be a type variable"
+        else return x
 
 identifier :: Parser String
 identifier = (lexeme . try) (p >>= check)

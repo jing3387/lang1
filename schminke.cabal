@@ -52,6 +52,7 @@ test-suite schminke-test
   hs-source-dirs:      test
   main-is:             Spec.hs
   other-modules:       Language.Schminke.Frontend.ParserSpec
+                     , Language.Schminke.Frontend.InferSpec
   build-depends:       base
                      , schminke
                      , hspec

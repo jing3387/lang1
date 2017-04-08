@@ -54,7 +54,7 @@ instance Pretty Literal where
 instance Pretty Expr where
   ppr p (Var x) = ppr p x
   ppr p (Lit l) = ppr p l
-  ppr p (Lam x body) = parens $ text "lambda" <+> ppr p x $$ nest 1 (ppr p body)
+  ppr p (Lam x body) = parens $ text "λ" <+> ppr p x $$ nest 1 (ppr p body)
   ppr p (Let x e body) =
     parens $ text "let" <+> parens (ppr p x <+> ppr p e) $$ nest 1 (ppr p body)
   ppr p (App f arg) = parens $ ppr p f <+> ppr p arg

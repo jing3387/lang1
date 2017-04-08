@@ -23,6 +23,9 @@ library
                      , Language.Schminke.Frontend.Env
                      , Language.Schminke.Frontend.Infer
                      , Language.Schminke.Frontend.Pretty
+                     , Language.Schminke.Backend
+                     , Language.Schminke.Backend.Core
+                     , Language.Schminke.Backend.DeBruijn
   other-modules:       Language.Schminke.Frontend.Lexer
   build-depends:       base >= 4.7 && < 5
                      , mtl
@@ -53,6 +56,7 @@ test-suite schminke-test
   main-is:             Spec.hs
   other-modules:       Language.Schminke.Frontend.ParserSpec
                      , Language.Schminke.Frontend.InferSpec
+                     , Language.Schminke.Backend.DeBruijnSpec
   build-depends:       base
                      , schminke
                      , hspec

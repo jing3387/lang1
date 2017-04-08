@@ -19,3 +19,4 @@ A statically typed language with an
 * Transformation to continuation-passing style (CPS).
   See:
   [Compiling with Continuations](https://books.google.com.au/books?id=zbDBQgAACAAJ&dq=isbn:0521416957&hl=en&sa=X&ved=0ahUKEwiD3fX6-5LTAhWMTbwKHWj1CSQQ6AEIGzAA)
+* Write a parser and pretty printer for the Core language

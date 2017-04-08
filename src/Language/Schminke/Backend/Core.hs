@@ -1,12 +1,12 @@
-module Language.Schminke.Frontend.Syntax where
+module Language.Schminke.Backend.Core where
 
 type Name = String
 
 data Expr
   = Lit Literal
-  | Var Name
-  | Lam Name
-        Expr
+  | Var Word
+        Name
+  | Lam Expr
   | Let Name
         Expr
         Expr
@@ -19,8 +19,3 @@ data Literal =
   deriving (Show, Eq, Ord)
 
 type Def = (String, Expr)
-
-data Program =
-  Program [Def]
-          Expr
-  deriving (Eq)

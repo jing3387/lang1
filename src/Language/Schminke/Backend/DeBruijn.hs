@@ -16,7 +16,7 @@ debruijn = debruijn' []
     debruijn' ctx expr =
       case expr of
         (Syntax.Lit (Syntax.Int n)) -> Core.Lit (Core.Int n)
-        (Syntax.Var x) -> Core.Var n x
+        (Syntax.Var x) -> Core.Var n
           where n =
                   case lookup x ctx of
                     Nothing -> 0

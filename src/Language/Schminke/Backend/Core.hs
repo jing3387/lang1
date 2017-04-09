@@ -5,11 +5,7 @@ type Name = String
 data Expr
   = Lit Literal
   | Var Word
-        Name
   | Lam Expr
-  | Let Name
-        Expr
-        Expr
   | App Expr
         Expr
   deriving (Show, Eq, Ord)

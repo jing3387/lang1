@@ -146,6 +146,16 @@ generalize env t = Forall as t
   where
     as = Set.toList $ ftv t `Set.difference` ftv env
 
+opType :: Binop -> Type
+opType op = opType' binops
+  where
+    opType' :: [BinopDef] -> Type
+    opType' [] = error $ "unknown operator" ++ show op
+    opType' ((_, op', ty):rest) =
+      if op' == op
+        then ty
+        else opType' rest
+
 infer :: Expr -> Infer (Type, [Constraint])
 infer expr =
   case expr of
@@ -153,6 +163,13 @@ infer expr =
     Var x -> do
       t <- lookupEnv x
       return (t, [])
+    Binop op e1 e2 -> do
+      (t1, c1) <- infer e1
+      (t2, c2) <- infer e2
+      tv <- fresh
+      let u1 = t1 `TArr` (t2 `TArr` tv)
+          u2 = opType op
+      return (tv, c1 ++ c2 ++ [(u1, u2)])
     Lam x e -> do
       tv <- fresh
       (t, c) <- inEnv (x, Forall [] tv) (infer e)

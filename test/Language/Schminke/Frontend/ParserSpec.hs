@@ -22,6 +22,9 @@ spec = do
         parse expression "" (L.pack "0") `shouldParse` (Lit (Int 0))
       it "parses a variable" $
         parse expression "" (L.pack "x") `shouldParse` (Var "x")
+      it "parses a binary operator" $
+        parse expression "" (L.pack "(add 1 2)") `shouldParse`
+        (Binop Add (Lit (Int 1)) (Lit (Int 2)))
       it "parses a lambda expression with no arguments" $
         parse expression "" (L.pack "(lambda () x)") `shouldParse` (Var "x")
       it "parses a lambda expression with one argument" $

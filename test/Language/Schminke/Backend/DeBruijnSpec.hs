@@ -19,6 +19,13 @@ spec = do
       debruijn (Syntax.Lit (Syntax.Int 0)) `shouldBe` Core.Lit (Core.Int 0)
     it "should convert a variable into a de Bruijn index" $
       debruijn (Syntax.Var "x") `shouldBe` Core.Var 0
+    it "should convert a binary operation into a binary operation" $
+      debruijn
+        (Syntax.Binop
+           Syntax.Add
+           (Syntax.Lit (Syntax.Int 0))
+           (Syntax.Lit (Syntax.Int 0))) `shouldBe`
+      Core.Binop Core.Add (Core.Lit (Core.Int 0)) (Core.Lit (Core.Int 0))
     it "should convert the identity function" $
       debruijn (Syntax.Lam "x" (Syntax.Var "x")) `shouldBe`
       (Core.Lam (Core.Var 0))

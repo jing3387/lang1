@@ -10,7 +10,7 @@ import Text.Megaparsec.Expr
 import Text.Megaparsec.Text.Lazy
 
 import Language.Schminke.Frontend.Lexer
-import Language.Schminke.Frontend.Syntax
+import Language.Schminke.Frontend.Syntax as Syntax
 import Language.Schminke.Frontend.Type
 
 int :: Parser Expr
@@ -22,6 +22,18 @@ var :: Parser Expr
 var = do
   x <- identifier
   return (Var x)
+
+binop :: BinopDef -> Parser Binop
+binop (str, op, _) = do
+  symbol str
+  return op
+
+binops' :: Parser Expr
+binops' = do
+  op <- foldl1 (<|>) (map binop Syntax.binops) <?> "operator"
+  e1 <- expr
+  e2 <- expr
+  return $ Binop op e1 e2
 
 lambda :: Parser Expr
 lambda = do
@@ -50,9 +62,7 @@ app = do
   return $ foldl App f args
 
 expr :: Parser Expr
-expr = do
-  es <- some $ int <|> var <|> parens (lambda <|> let' <|> app)
-  return (foldl1 App es)
+expr = int <|> var <|> parens (binops' <|> lambda <|> let' <|> app)
 
 define :: Parser Def
 define =
@@ -84,6 +94,11 @@ tint = do
   reserved "Int"
   return typeInt
 
+tbool :: Parser Type
+tbool = do
+  reserved "Bool"
+  return typeBool
+
 tv :: Parser TVar
 tv = do
   x <- tvId
@@ -95,7 +110,7 @@ tvar = do
   return $ TVar x
 
 tterm :: Parser Type
-tterm = parens texpr <|> tint <|> tvar
+tterm = parens texpr <|> tint <|> tbool <|> tvar
 
 tops = [[InfixR (TArr <$ symbol "->")]]
 

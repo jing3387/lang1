@@ -30,4 +30,5 @@ isval :: Expr -> Bool
 isval Lit {} = True
 isval Var {} = True
 isval Lam {} = True
+isval Binop {} = True
 isval _ = False

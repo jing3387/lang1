@@ -21,6 +21,17 @@ debruijn = debruijn' []
                   case lookup x ctx of
                     Nothing -> 0
                     Just n' -> n'
+        (Syntax.Binop op e1 e2) ->
+          Core.Binop (coreop op) (debruijn' ctx e1) (debruijn' ctx e2)
+          where coreop :: Syntax.Binop -> Core.Binop
+                coreop op =
+                  case op of
+                    Syntax.Add -> Core.Add
+                    Syntax.Sub -> Core.Sub
+                    Syntax.Mul -> Core.Mul
+                    Syntax.Sdiv -> Core.Sdiv
+                    Syntax.Srem -> Core.Srem
+                    Syntax.Eq -> Core.Eq
         (Syntax.Lam x body) -> Core.Lam (debruijn' ctx' body)
           where ctx' = (x, 0) : incr ctx
         x@Syntax.Let {} -> debruijn' ctx (desugar x)

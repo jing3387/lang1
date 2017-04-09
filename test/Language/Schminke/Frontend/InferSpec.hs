@@ -11,6 +11,7 @@ import Text.Megaparsec
 import qualified Language.Schminke.Frontend.Env as Env
 import Language.Schminke.Frontend.Infer
 import Language.Schminke.Frontend.Parser
+import Language.Schminke.Frontend.Pretty
 import Language.Schminke.Frontend.Syntax
 import Language.Schminke.Frontend.Type
 
@@ -23,7 +24,7 @@ typeof input =
     Left err -> error $ parseErrorPretty err
     Right x ->
       case constraintsExpr Env.empty x of
-        Left err -> error $ show x
+        Left err -> error $ show err
         Right (_, _, _, sc) -> sc
 
 parseScheme :: String -> Scheme
@@ -38,6 +39,10 @@ spec = do
     context "when given a well-typed program" $ do
       it "should infer the type scheme of an integer" $
         typeof "0" `shouldBe` parseScheme "forall. Int"
+      it "should infer the type scheme of the `add` operation" $
+        typeof "(add 1 2)" `shouldBe` parseScheme "forall. Int"
+      it "should infer the type scheme of `eq` operation" $
+        typeof "(eq 0 1)" `shouldBe` parseScheme "forall. Bool"
       it "should infer the type scheme of the identity function" $
         typeof "(lambda (x) x)" `shouldBe` parseScheme "forall a. a -> a"
       it "should infer the type scheme of the constant function" $
@@ -51,8 +56,7 @@ spec = do
         typeof "((lambda (x) x) 0)" `shouldBe` parseScheme "forall. Int"
     context "when given an ill-typed program" $ do
       it "should not infer a type scheme when there is a type error" $
-        pendingWith
-          "need some primitive operations on integers before this can be tested"
+        evaluate (typeof "(add (eq 1 0) 1)") `shouldThrow` anyErrorCall
       it "should not infer a type scheme when a variable is unbound" $
         evaluate (typeof "y") `shouldThrow` anyErrorCall
       it "should not infer a type scheme when given an infinite type" $

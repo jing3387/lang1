@@ -18,3 +18,6 @@ data Scheme =
 
 typeInt :: Type
 typeInt = TCon "Int"
+
+typeBool :: Type
+typeBool = TCon "Bool"

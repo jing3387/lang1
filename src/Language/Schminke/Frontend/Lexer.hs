@@ -5,6 +5,8 @@ import Text.Megaparsec
 import qualified Text.Megaparsec.Lexer as L
 import Text.Megaparsec.Text.Lazy
 
+import Language.Schminke.Frontend.Syntax
+
 sc :: Parser ()
 sc = L.space (void spaceChar) lineCmnt blockCmnt
   where
@@ -27,7 +29,11 @@ reserved :: String -> Parser ()
 reserved w = string w *> notFollowedBy (alphaNumChar <|> symbolChar) *> sc
 
 reservedWords :: [String]
-reservedWords = ["define", "lambda", "let", "Int", "forall"]
+reservedWords =
+  ["define", "lambda", "let"] ++ (map (\(str, _, _) -> str) binops)
+
+reservedTypes :: [String]
+reservedTypes = ["forall", "Int", "Bool"]
 
 reservedSymbols :: String
 reservedSymbols = "()"
@@ -37,12 +43,12 @@ tvId = (lexeme . try) (p >>= check)
   where
     p = some lowerChar
     check x =
-      if x `elem` reservedWords
-        then fail $ "keyword " ++ show x ++ " cannot be a type variable"
+      if x `elem` reservedTypes
+        then fail $ show x ++ " cannot be a type variable"
         else return x
 
 identifier :: Parser String
-identifier = (lexeme . try) (p >>= check)
+identifier = (lexeme . try) ((p <?> "identifier") >>= check)
   where
     p =
       (:) <$> (letterChar <|> symbolChar) <*> many (alphaNumChar <|> symbolChar)

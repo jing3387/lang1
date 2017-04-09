@@ -3,6 +3,7 @@
 module Language.Schminke.Frontend.Env
   ( Env(..)
   , empty
+  , Language.Schminke.Frontend.Env.init
   , lookup
   , remove
   , extend
@@ -29,6 +30,9 @@ data Env = TypeEnv
 
 empty :: Env
 empty = TypeEnv Map.empty
+
+init :: Env
+init = empty `extends` prims
 
 extend :: Env -> (Name, Scheme) -> Env
 extend env (x, s) = env {types = Map.insert x s (types env)}

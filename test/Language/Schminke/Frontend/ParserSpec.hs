@@ -10,6 +10,7 @@ import Text.Megaparsec
 
 import Language.Schminke.Frontend.Parser
 import Language.Schminke.Frontend.Syntax
+import Language.Schminke.Frontend.Type
 
 main :: IO ()
 main = hspec spec
@@ -24,7 +25,7 @@ spec = do
         parse expression "" (L.pack "x") `shouldParse` (Var "x")
       it "parses a binary operator" $
         parse expression "" (L.pack "(add 1 2)") `shouldParse`
-        (Binop Add (Lit (Int 1)) (Lit (Int 2)))
+        (App (App (Var "add") (Lit (Int 1))) (Lit (Int 2)))
       it "parses a lambda expression with no arguments" $
         parse expression "" (L.pack "(lambda () x)") `shouldParse` (Var "x")
       it "parses a lambda expression with one argument" $
@@ -41,6 +42,12 @@ spec = do
       it "parses a let expression with multiple bindings" $
         parse expression "" (L.pack "(let ((x 0) (y x)) y)") `shouldParse`
         (Let "x" (Lit (Int 0)) (Let "y" (Var "x") (Var "y")))
+      it "parses an if expression" $
+        parse expression "" (L.pack "(if (eq 0 0) 0 1)") `shouldParse`
+        (If
+           (App (App (Var "eq") (Lit (Int 0))) (Lit (Int 0)))
+           (Lit (Int 0))
+           (Lit (Int 1)))
       it "parses an application with no arguments" $
         parse expression "" (L.pack "(f)") `shouldParse` (Var "f")
       it "parses an application with one argument" $
@@ -66,3 +73,18 @@ spec = do
         parse expression "" `shouldFailOn` (L.pack "(lambda ())")
       it "should not parse an empty let expression" $
         parse expression "" `shouldFailOn` (L.pack "(let ())")
+  describe "program" $ do
+    it "should parse a declaration of an integer type" $
+      parse program "" (L.pack "(declare x : Int)") `shouldParse`
+      [Dec "x" (TCon "Int")]
+    it "should parse a declaration of the identity function" $
+      parse program "" (L.pack "(declare id : a -> a)") `shouldParse`
+      [Dec "id" (TArr (TVar (TV "a")) (TVar (TV "a")))]
+    it "should parse a declaration of the eq function" $
+      parse program "" (L.pack "(declare eq : Int -> Int -> a + b)") `shouldParse`
+      [ Dec
+          "eq"
+          (TArr
+             (TCon "Int")
+             (TArr (TCon "Int") (TSum (TVar (TV "a")) (TVar (TV "b")))))
+      ]

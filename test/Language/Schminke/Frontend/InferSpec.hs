@@ -23,7 +23,7 @@ typeof input =
   case parse expression "" (L.pack input) of
     Left err -> error $ parseErrorPretty err
     Right x ->
-      case constraintsExpr Env.empty x of
+      case constraintsExpr Env.init x of
         Left err -> error $ show err
         Right (_, _, _, sc) -> sc
 
@@ -42,7 +42,7 @@ spec = do
       it "should infer the type scheme of the `add` operation" $
         typeof "(add 1 2)" `shouldBe` parseScheme "forall. Int"
       it "should infer the type scheme of `eq` operation" $
-        typeof "(eq 0 1)" `shouldBe` parseScheme "forall. Bool"
+        typeof "(eq 0 1)" `shouldBe` parseScheme "forall a b. a -> b -> a + b"
       it "should infer the type scheme of the identity function" $
         typeof "(lambda (x) x)" `shouldBe` parseScheme "forall a. a -> a"
       it "should infer the type scheme of the constant function" $

@@ -25,7 +25,7 @@ library
                      , Language.Schminke.Frontend.Pretty
                      , Language.Schminke.Backend
                      , Language.Schminke.Backend.Core
-                     , Language.Schminke.Backend.DeBruijn
+                     , Language.Schminke.Backend.Convert
                      , Language.Schminke.Backend.ANF
   other-modules:       Language.Schminke.Frontend.Lexer
   build-depends:       base >= 4.7 && < 5
@@ -57,7 +57,7 @@ test-suite schminke-test
   main-is:             Spec.hs
   other-modules:       Language.Schminke.Frontend.ParserSpec
                      , Language.Schminke.Frontend.InferSpec
-                     , Language.Schminke.Backend.DeBruijnSpec
+                     , Language.Schminke.Backend.ConvertSpec
                      , Language.Schminke.Backend.ANFSpec
   build-depends:       base
                      , schminke

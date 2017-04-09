@@ -23,7 +23,7 @@ data IState = IState
   }
 
 initState :: IState
-initState = IState Env.empty
+initState = IState Env.init
 
 type Repl a = HaskelineT (StateT IState IO) a
 

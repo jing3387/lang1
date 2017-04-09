@@ -6,6 +6,7 @@ import qualified Text.Megaparsec.Lexer as L
 import Text.Megaparsec.Text.Lazy
 
 import Language.Schminke.Frontend.Syntax
+import Language.Schminke.Frontend.Type
 
 sc :: Parser ()
 sc = L.space (void spaceChar) lineCmnt blockCmnt
@@ -29,11 +30,10 @@ reserved :: String -> Parser ()
 reserved w = string w *> notFollowedBy (alphaNumChar <|> symbolChar) *> sc
 
 reservedWords :: [String]
-reservedWords =
-  ["define", "lambda", "let"] ++ (map (\(str, _, _) -> str) binops)
+reservedWords = ["declare", "define", "lambda", "if", "let"]
 
 reservedTypes :: [String]
-reservedTypes = ["forall", "Int", "Bool"]
+reservedTypes = ["forall", "Int", "Bool"] ++ typeOps
 
 reservedSymbols :: String
 reservedSymbols = "()"

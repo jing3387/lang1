@@ -1,6 +1,7 @@
 module Language.Schminke.Frontend.Parser
   ( expression
   , program
+  , top
   , scheme
   ) where
 
@@ -23,18 +24,6 @@ var = do
   x <- identifier
   return (Var x)
 
-binop :: BinopDef -> Parser Binop
-binop (str, op, _) = do
-  symbol str
-  return op
-
-binops' :: Parser Expr
-binops' = do
-  op <- foldl1 (<|>) (map binop Syntax.binops) <?> "operator"
-  e1 <- expr
-  e2 <- expr
-  return $ Binop op e1 e2
-
 lambda :: Parser Expr
 lambda = do
   reserved "lambda"
@@ -55,6 +44,14 @@ let' = do
   body <- expr
   return $ foldr (\(ident, expr) body -> Let ident expr body) body bindings
 
+if' :: Parser Expr
+if' = do
+  reserved "if"
+  cond <- expr
+  tr <- expr
+  fl <- expr
+  return $ If cond tr fl
+
 app :: Parser Expr
 app = do
   f <- expr
@@ -62,31 +59,40 @@ app = do
   return $ foldl App f args
 
 expr :: Parser Expr
-expr = int <|> var <|> parens (binops' <|> lambda <|> let' <|> app)
+expr = int <|> var <|> parens (lambda <|> let' <|> if' <|> app)
 
-define :: Parser Def
+declare :: Parser Top
+declare =
+  parens $ do
+    reserved "declare"
+    x <- identifier
+    symbol ":"
+    ty <- texpr
+    return $ Dec x ty
+
+define :: Parser Top
 define =
   parens $ do
     reserved "define"
     x <- identifier
     e <- expr
-    return $ (x, e)
+    return $ Def x e
 
-val :: Parser Def
+val :: Parser Top
 val = do
-  expr <- expression
-  return ("it", expr)
+  e <- expression
+  return $ Def "it" e
 
-top :: Parser Def
-top = try define <|> val
+top :: Parser Top
+top = try (declare <|> define) <|> val
 
-modl :: Parser [Def]
+modl :: Parser [Top]
 modl = many top
 
 expression :: Parser Expr
 expression = between sc eof expr
 
-program :: Parser [Def]
+program :: Parser [Top]
 program = between sc eof modl
 
 tint :: Parser Type
@@ -112,7 +118,11 @@ tvar = do
 tterm :: Parser Type
 tterm = parens texpr <|> tint <|> tbool <|> tvar
 
-tops = [[InfixR (TArr <$ symbol "->")]]
+tops =
+  [ [InfixL (TPro <$ symbol "*")]
+  , [InfixL (TSum <$ symbol "+")]
+  , [InfixR (TArr <$ symbol "->")]
+  ]
 
 texpr :: Parser Type
 texpr = makeExprParser tterm tops

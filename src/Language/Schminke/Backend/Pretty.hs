@@ -20,6 +20,7 @@ instance Pretty Literal where
 
 instance Pretty Expr where
   ppr p (Var n) = integer (fromIntegral n)
+  ppr p (Prim p') = ppr p p'
   ppr p (Lit l) = ppr p l
   ppr p (Lam body) = parens $ text "λ" <+> ppr p body
   ppr p (App f arg) = parens $ ppr p f <+> ppr p arg

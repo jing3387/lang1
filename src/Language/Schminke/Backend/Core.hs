@@ -5,9 +5,7 @@ type Name = String
 data Expr
   = Lit Literal
   | Var Word
-  | Binop Binop
-          Expr
-          Expr
+  | Prim Name
   | Lam Expr
   | App Expr
         Expr
@@ -26,4 +24,10 @@ data Binop
   | Eq
   deriving (Eq, Ord, Show)
 
-type Def = (String, Expr)
+data Top =
+  Def Name
+      Expr
+  deriving (Show, Eq, Ord)
+
+prims :: [String]
+prims = ["add", "sub", "mul", "sdiv", "srem", "eq"]

@@ -3,7 +3,7 @@
 
 module Language.Schminke.Frontend.Pretty
   ( ppexpr
-  , ppdef
+  , pptop
   , ppprog
   , ppconstraint
   , ppconstraints
@@ -59,8 +59,9 @@ instance Pretty Expr where
     parens $ text "let" <+> parens (ppr p x <+> ppr p e) $$ nest 1 (ppr p body)
   ppr p (App f arg) = parens $ ppr p f <+> ppr p arg
 
-instance Pretty Def where
-  ppr p (x, body) = parens $ text "define" <+> ppr p body
+instance Pretty Top where
+  ppr p (Def x body) = parens $ text "define" <+> ppr p x $$ nest 1 (ppr p body)
+  ppr p (Dec x ty) = parens $ text "declare" <+> ppr p x <+> ppr p ty
 
 instance Pretty Program where
   ppr p (Program defs expr) = vcat (map (ppr p) defs ++ [ppr p expr])
@@ -92,8 +93,8 @@ instance Show TypeError where
 ppexpr :: Expr -> String
 ppexpr = render . ppr 0
 
-ppdef :: Def -> String
-ppdef = render . ppr 0
+pptop :: Top -> String
+pptop = render . ppr 0
 
 ppprog :: Program -> String
 ppprog = render . ppr 0

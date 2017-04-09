@@ -50,9 +50,13 @@ instance Substitutable Type where
   apply _ (TCon a) = TCon a
   apply (Subst s) t@(TVar a) = Map.findWithDefault t a s
   apply s (t1 `TArr` t2) = apply s t1 `TArr` apply s t2
+  apply s (t1 `TSum` t2) = apply s t1 `TSum` apply s t2
+  apply s (t1 `TPro` t2) = apply s t1 `TPro` apply s t2
   ftv TCon {} = Set.empty
   ftv (TVar a) = Set.singleton a
   ftv (t1 `TArr` t2) = ftv t1 `Set.union` ftv t2
+  ftv (t1 `TSum` t2) = ftv t1 `Set.union` ftv t2
+  ftv (t1 `TPro` t2) = ftv t1 `Set.union` ftv t2
 
 instance Substitutable Scheme where
   apply (Subst s) (Forall as t) = Forall as $ apply s' t
@@ -146,16 +150,6 @@ generalize env t = Forall as t
   where
     as = Set.toList $ ftv t `Set.difference` ftv env
 
-opType :: Binop -> Type
-opType op = opType' binops
-  where
-    opType' :: [BinopDef] -> Type
-    opType' [] = error $ "unknown operator" ++ show op
-    opType' ((_, op', ty):rest) =
-      if op' == op
-        then ty
-        else opType' rest
-
 infer :: Expr -> Infer (Type, [Constraint])
 infer expr =
   case expr of
@@ -163,13 +157,6 @@ infer expr =
     Var x -> do
       t <- lookupEnv x
       return (t, [])
-    Binop op e1 e2 -> do
-      (t1, c1) <- infer e1
-      (t2, c2) <- infer e2
-      tv <- fresh
-      let u1 = t1 `TArr` (t2 `TArr` tv)
-          u2 = opType op
-      return (tv, c1 ++ c2 ++ [(u1, u2)])
     Lam x e -> do
       tv <- fresh
       (t, c) <- inEnv (x, Forall [] tv) (infer e)
@@ -188,13 +175,25 @@ infer expr =
           let sc = generalize (apply sub env) (apply sub t1)
           (t2, c2) <- inEnv (x, sc) $ local (apply sub) (infer e2)
           return (t2, c1 ++ c2)
+    If cond tr fl -> do
+      (t1, c1) <- infer cond
+      (t2, c2) <- infer tr
+      (t3, c3) <- infer fl
+      tv1 <- fresh
+      tv2 <- fresh
+      let t =
+            if t2 == t3
+              then t2
+              else TSum t2 t3
+      return (t, c1 ++ c2 ++ c3 ++ [(t1, (TArr tv1 (TArr tv2 (TSum tv1 tv2))))])
 
-inferTop :: Env -> [(String, Expr)] -> Either TypeError Env
+inferTop :: Env -> [Top] -> Either TypeError Env
 inferTop env [] = Right env
-inferTop env ((name, ex):xs) =
+inferTop env ((Def name ex):xs) =
   case inferExpr env ex of
     Left err -> Left err
     Right ty -> inferTop (extend env (name, ty)) xs
+inferTop env (Dec {}:xs) = inferTop env xs
 
 normalize :: Scheme -> Scheme
 normalize (Forall _ body) = Forall (map snd ord) (normtype body)
@@ -202,8 +201,11 @@ normalize (Forall _ body) = Forall (map snd ord) (normtype body)
     ord = zip (nub $ fv body) (map TV letters)
     fv (TVar a) = [a]
     fv (TArr a b) = fv a ++ fv b
+    fv (TSum a b) = fv a ++ fv b
+    fv (TPro a b) = fv a ++ fv b
     fv (TCon _) = []
     normtype (TArr a b) = TArr (normtype a) (normtype b)
+    normtype (TSum a b) = TSum (normtype a) (normtype b)
     normtype (TCon a) = TCon a
     normtype (TVar a) =
       case Prelude.lookup a ord of
@@ -236,6 +238,8 @@ unifies t1 t2
 unifies (TVar v) t = v `bind` t
 unifies t (TVar v) = v `bind` t
 unifies (TArr t1 t2) (TArr t3 t4) = unifyMany [t1, t2] [t3, t4]
+unifies (TSum t1 t2) (TSum t3 t4) = unifyMany [t1, t2] [t3, t4]
+unifies (TPro t1 t2) (TPro t3 t4) = unifyMany [t1, t2] [t3, t4]
 unifies t1 t2 = throwError $ UnificationFail t1 t2
 
 solver :: Unifier -> Solve Subst

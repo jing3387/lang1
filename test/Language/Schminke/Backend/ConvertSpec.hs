@@ -1,12 +1,12 @@
-module Language.Schminke.Backend.DeBruijnSpec
+module Language.Schminke.Backend.ConvertSpec
   ( main
   , spec
   ) where
 
 import Test.Hspec
 
+import Language.Schminke.Backend.Convert
 import Language.Schminke.Backend.Core as Core
-import Language.Schminke.Backend.DeBruijn
 import Language.Schminke.Frontend.Syntax as Syntax
 
 main :: IO ()
@@ -19,13 +19,6 @@ spec = do
       debruijn (Syntax.Lit (Syntax.Int 0)) `shouldBe` Core.Lit (Core.Int 0)
     it "should convert a variable into a de Bruijn index" $
       debruijn (Syntax.Var "x") `shouldBe` Core.Var 0
-    it "should convert a binary operation into a binary operation" $
-      debruijn
-        (Syntax.Binop
-           Syntax.Add
-           (Syntax.Lit (Syntax.Int 0))
-           (Syntax.Lit (Syntax.Int 0))) `shouldBe`
-      Core.Binop Core.Add (Core.Lit (Core.Int 0)) (Core.Lit (Core.Int 0))
     it "should convert the identity function" $
       debruijn (Syntax.Lam "x" (Syntax.Var "x")) `shouldBe`
       (Core.Lam (Core.Var 0))
@@ -62,4 +55,19 @@ spec = do
            (Syntax.Let "y" (Syntax.Var "x") (Syntax.Var "x"))) `shouldBe`
       (Core.App
          (Core.Lam (Core.App (Core.Lam (Core.Var 1)) (Core.Var 0)))
+         (Core.Lit (Core.Int 1)))
+    it "should convert an if expression" $
+      debruijn
+        (Syntax.If
+           (Syntax.App
+              (Syntax.App (Syntax.Var "eq") (Syntax.Lit (Syntax.Int 0)))
+              (Syntax.Lit (Syntax.Int 0)))
+           (Syntax.Lit (Syntax.Int 0))
+           (Syntax.Lit (Syntax.Int 1))) `shouldBe`
+      (Core.App
+         (Core.App
+            (Core.App
+               (Core.App (Prim "eq") (Core.Lit (Core.Int 0)))
+               (Core.Lit (Core.Int 0)))
+            (Core.Lit (Core.Int 0)))
          (Core.Lit (Core.Int 1)))

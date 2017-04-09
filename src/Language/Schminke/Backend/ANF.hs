@@ -1,9 +1,13 @@
 module Language.Schminke.Backend.ANF
   ( normalizeTerm
+  , normalizeDefine
   ) where
 
+import Language.Schminke.Backend.Convert
 import Language.Schminke.Backend.Core
-import Language.Schminke.Backend.DeBruijn
+
+normalizeDefine :: Top -> Top
+normalizeDefine = undefined
 
 normalizeTerm :: Expr -> Expr
 normalizeTerm m = normalize m (\x -> x)
@@ -30,5 +34,5 @@ isval :: Expr -> Bool
 isval Lit {} = True
 isval Var {} = True
 isval Lam {} = True
-isval Binop {} = True
+isval Prim {} = True
 isval _ = False

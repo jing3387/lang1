@@ -7,6 +7,7 @@ import Control.Monad.Identity
 import Control.Monad.State.Strict
 import Data.List (isPrefixOf, foldl')
 import qualified Data.Map as Map
+import Data.Maybe
 import Data.Monoid
 import qualified Data.Text.Lazy as L
 import qualified Data.Text.Lazy.IO as L
@@ -17,6 +18,7 @@ import Text.Megaparsec
 
 import Language.Schminke
 import Language.Schminke.Frontend.Env as Env
+import Language.Schminke.Frontend.Syntax as Syntax
 
 data IState = IState
   { tyctx :: Env.Env
@@ -47,8 +49,31 @@ exec :: Bool -> L.Text -> Repl ()
 exec update source = do
   st <- get
   mod <- hoistParseErr $ parse program "" source
-  tyctx' <- hoistErr $ inferTop (tyctx st) mod
-  let st' = st {tyctx = tyctx' <> tyctx st}
+  let (Program defs expr) = mod
+  let expr' =
+        case expr of
+          Nothing -> []
+          Just e -> [Syntax.Def "it" e]
+  let tops = defs ++ expr'
+  let defs' =
+        catMaybes $
+        map
+          (\top ->
+             case top of
+               def@Syntax.Def {} -> Just def
+               _ -> Nothing)
+          tops
+  let decs' =
+        catMaybes $
+        map
+          (\top ->
+             case top of
+               (Dec x sc) -> Just (x, sc)
+               _ -> Nothing)
+          tops
+  let tyctx' = tyctx st `extends` decs'
+  tyctx'' <- hoistErr $ inferTop tyctx' defs'
+  let st' = st {tyctx = tyctx''}
   when update (put st')
 
 showOutput :: String -> IState -> Repl ()

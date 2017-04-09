@@ -75,16 +75,22 @@ spec = do
         parse expression "" `shouldFailOn` (L.pack "(let ())")
   describe "program" $ do
     it "should parse a declaration of an integer type" $
-      parse program "" (L.pack "(declare x : Int)") `shouldParse`
-      [Dec "x" (TCon "Int")]
+      parse program "" (L.pack "(declare x : forall. Int)") `shouldParse`
+      Program [Dec "x" (Forall [] (TCon "Int"))] Nothing
     it "should parse a declaration of the identity function" $
-      parse program "" (L.pack "(declare id : a -> a)") `shouldParse`
-      [Dec "id" (TArr (TVar (TV "a")) (TVar (TV "a")))]
+      parse program "" (L.pack "(declare id : forall a. a -> a)") `shouldParse`
+      Program
+        [Dec "id" (Forall [TV "a"] (TArr (TVar (TV "a")) (TVar (TV "a"))))]
+        Nothing
     it "should parse a declaration of the eq function" $
-      parse program "" (L.pack "(declare eq : Int -> Int -> a + b)") `shouldParse`
-      [ Dec
-          "eq"
-          (TArr
-             (TCon "Int")
-             (TArr (TCon "Int") (TSum (TVar (TV "a")) (TVar (TV "b")))))
-      ]
+      parse program "" (L.pack "(declare eq : forall a b. Int -> Int -> a + b)") `shouldParse`
+      Program
+        [ Dec
+            "eq"
+            (Forall
+               [TV "a", TV "b"]
+               (TArr
+                  (TCon "Int")
+                  (TArr (TCon "Int") (TSum (TVar (TV "a")) (TVar (TV "b"))))))
+        ]
+        Nothing

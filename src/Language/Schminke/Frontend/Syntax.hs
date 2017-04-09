@@ -23,12 +23,12 @@ data Literal =
 
 data Top
   = Dec Name
-        Type
+        Scheme
   | Def Name
         Expr
   deriving (Show, Eq, Ord)
 
 data Program =
   Program [Top]
-          Expr
-  deriving (Eq)
+          (Maybe Expr)
+  deriving (Show, Eq, Ord)

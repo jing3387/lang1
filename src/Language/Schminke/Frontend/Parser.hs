@@ -67,8 +67,8 @@ declare =
     reserved "declare"
     x <- identifier
     symbol ":"
-    ty <- texpr
-    return $ Dec x ty
+    sc <- scheme
+    return $ Dec x sc
 
 define :: Parser Top
 define =
@@ -86,13 +86,16 @@ val = do
 top :: Parser Top
 top = try (declare <|> define) <|> val
 
-modl :: Parser [Top]
-modl = many top
+modl :: Parser Program
+modl = do
+  defs <- many top
+  e <- optional expr
+  return $ Program defs e
 
 expression :: Parser Expr
 expression = between sc eof expr
 
-program :: Parser [Top]
+program :: Parser Program
 program = between sc eof modl
 
 tint :: Parser Type

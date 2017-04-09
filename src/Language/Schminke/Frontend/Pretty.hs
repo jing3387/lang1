@@ -64,7 +64,8 @@ instance Pretty Top where
   ppr p (Dec x ty) = parens $ text "declare" <+> ppr p x <+> ppr p ty
 
 instance Pretty Program where
-  ppr p (Program defs expr) = vcat (map (ppr p) defs ++ [ppr p expr])
+  ppr p (Program defs expr) =
+    vcat (map (ppr p) defs) $$ (maybe Text.PrettyPrint.empty (ppr p) expr)
 
 instance Pretty Constraint where
   ppr p (a, b) = (ppr p a) <+> text " ~ " <+> (ppr p b)

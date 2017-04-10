@@ -26,8 +26,18 @@ parens = between (symbol "(") (symbol ")")
 integer :: Parser Integer
 integer = lexeme L.integer
 
+identStart :: Parser Char
+identStart = letterChar <|> symbolChar
+
+identLetter :: Parser Char
+identLetter = alphaNumChar <|> symbolChar
+
 reserved :: String -> Parser ()
-reserved w = string w *> notFollowedBy (alphaNumChar <|> symbolChar) *> sc
+reserved w =
+  lexeme $
+  try $ do
+    string w
+    notFollowedBy identLetter <?> ("end of" ++ show w)
 
 reservedWords :: [String]
 reservedWords = ["declare", "define", "lambda", "if", "let"]
@@ -50,12 +60,8 @@ tvId = (lexeme . try) (p >>= check)
 identifier :: Parser String
 identifier = (lexeme . try) ((p <?> "identifier") >>= check)
   where
-    p =
-      (:) <$> (letterChar <|> symbolChar) <*> many (alphaNumChar <|> symbolChar)
+    p = (:) <$> identStart <*> many identLetter
     check x =
       if x `elem` reservedWords
         then fail $ "keyword " ++ show x ++ " cannot be an identifier"
         else return x
-
-contents :: Parser a -> Parser a
-contents p = between sc eof p

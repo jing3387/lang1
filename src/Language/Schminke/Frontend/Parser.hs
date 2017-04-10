@@ -62,35 +62,28 @@ expr :: Parser Expr
 expr = int <|> var <|> parens (lambda <|> let' <|> if' <|> app)
 
 declare :: Parser Top
-declare =
-  parens $ do
-    reserved "declare"
-    x <- identifier
-    symbol ":"
-    sc <- scheme
-    return $ Dec x sc
+declare = do
+  reserved "declare"
+  x <- identifier
+  symbol ":"
+  sc <- scheme
+  return $ Dec x sc
 
 define :: Parser Top
-define =
-  parens $ do
-    reserved "define"
-    x <- identifier
-    e <- expr
-    return $ Def x e
-
-val :: Parser Top
-val = do
-  e <- expression
-  return $ Def "it" e
+define = do
+  reserved "define"
+  x <- identifier
+  e <- expr
+  return $ Def x e
 
 top :: Parser Top
-top = try (declare <|> define) <|> val
+top = try $ parens (declare <|> define)
 
 modl :: Parser Program
 modl = do
-  defs <- many top
+  tops <- many top
   e <- optional expr
-  return $ Program defs e
+  return $ Program tops e
 
 expression :: Parser Expr
 expression = between sc eof expr

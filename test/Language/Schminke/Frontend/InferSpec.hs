@@ -4,6 +4,8 @@ module Language.Schminke.Frontend.InferSpec
   ) where
 
 import Control.Exception (evaluate)
+import Data.List
+import qualified Data.Map as Map
 import qualified Data.Text.Lazy as L
 import Test.Hspec
 import Text.Megaparsec
@@ -26,6 +28,15 @@ typeof input =
       case constraintsExpr Env.init x of
         Left err -> error $ show err
         Right (_, _, _, sc) -> sc
+
+typeofProgram :: String -> Map.Map Name Scheme
+typeofProgram input =
+  case parse program "" (L.pack input) of
+    Left err -> error $ parseErrorPretty err
+    Right (Program tops x) ->
+      case inferTop Env.init tops of
+        Left err -> error $ show err
+        Right (Env.TypeEnv {Env.types = t}) -> t
 
 parseScheme :: String -> Scheme
 parseScheme input =
@@ -61,3 +72,9 @@ spec = do
         evaluate (typeof "y") `shouldThrow` anyErrorCall
       it "should not infer a type scheme when given an infinite type" $
         evaluate (typeof "(lambda (x) (x x))") `shouldThrow` anyErrorCall
+  describe "inferTop" $ do
+    it "should infer the type of the factorial function" $
+      (typeofProgram
+         "(declare f : forall. Int -> Int) (define f (lambda (n) (if (eq n 0) 1 (mul n (f (sub n 1))))))") Map.!
+      "f" `shouldBe`
+      parseScheme "forall. Int -> Int"

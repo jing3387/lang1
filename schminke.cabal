@@ -26,8 +26,10 @@ library
                      , Language.Schminke.Backend
                      , Language.Schminke.Backend.Core
                      , Language.Schminke.Backend.Convert
-                     , Language.Schminke.Backend.ANF
+                     , Language.Schminke.Backend.Normalize
+                     , Language.Schminke.Backend.Parser
   other-modules:       Language.Schminke.Frontend.Lexer
+                     , Language.Schminke.Backend.Sub
   build-depends:       base >= 4.7 && < 5
                      , mtl
                      , text
@@ -58,9 +60,10 @@ test-suite schminke-test
   other-modules:       Language.Schminke.Frontend.ParserSpec
                      , Language.Schminke.Frontend.InferSpec
                      , Language.Schminke.Backend.ConvertSpec
-                     , Language.Schminke.Backend.ANFSpec
+                     , Language.Schminke.Backend.NormalizeSpec
   build-depends:       base
                      , schminke
+                     , containers
                      , hspec
                      , text
                      , megaparsec

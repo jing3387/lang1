@@ -181,11 +181,9 @@ infer expr =
       (t3, c3) <- infer fl
       tv1 <- fresh
       tv2 <- fresh
-      let t =
-            if t2 == t3
-              then t2
-              else TSum t2 t3
-      return (t, c1 ++ c2 ++ c3 ++ [(t1, (TArr tv1 (TArr tv2 (TSum tv1 tv2))))])
+      let t = typeSum t2 t3
+      return
+        (t, c1 ++ c2 ++ c3 ++ [(t1, (TArr tv1 (TArr tv2 (typeSum tv1 tv2))))])
 
 inferTop :: Env -> [Top] -> Either TypeError Env
 inferTop env [] = Right env
@@ -193,7 +191,7 @@ inferTop env ((Def name ex):xs) =
   case inferExpr env ex of
     Left err -> Left err
     Right ty -> inferTop (extend env (name, ty)) xs
-inferTop env (Dec {}:xs) = inferTop env xs
+inferTop env ((Dec x ty):xs) = inferTop (env `extend` (x, ty)) xs
 
 normalize :: Scheme -> Scheme
 normalize (Forall _ body) = Forall (map snd ord) (normtype body)
@@ -205,7 +203,8 @@ normalize (Forall _ body) = Forall (map snd ord) (normtype body)
     fv (TPro a b) = fv a ++ fv b
     fv (TCon _) = []
     normtype (TArr a b) = TArr (normtype a) (normtype b)
-    normtype (TSum a b) = TSum (normtype a) (normtype b)
+    normtype (TSum a b) = typeSum (normtype a) (normtype b)
+    normtype (TPro a b) = TPro (normtype a) (normtype b)
     normtype (TCon a) = TCon a
     normtype (TVar a) =
       case Prelude.lookup a ord of

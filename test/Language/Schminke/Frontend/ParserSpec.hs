@@ -82,11 +82,14 @@ spec = do
       Program
         [Dec "id" (Forall [TV "a"] (TArr (TVar (TV "a")) (TVar (TV "a"))))]
         Nothing
-    it "should parse a declaration of the eq function" $
-      parse program "" (L.pack "(declare eq : forall a b. Int -> Int -> a + b)") `shouldParse`
+    it "should parse a complicated declaration" $
+      parse
+        program
+        ""
+        (L.pack "(declare foo : forall a b. Int -> Int -> a + b)") `shouldParse`
       Program
         [ Dec
-            "eq"
+            "foo"
             (Forall
                [TV "a", TV "b"]
                (TArr
@@ -94,3 +97,25 @@ spec = do
                   (TArr (TCon "Int") (TSum (TVar (TV "a")) (TVar (TV "b"))))))
         ]
         Nothing
+    it "should parse the factorial program" $
+      parse
+        program
+        ""
+        (L.pack
+           "(declare f : forall. Int -> Int) (define f (lambda (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))) (f 5)") `shouldParse`
+      Program
+        [ Dec "f" (Forall [] (TArr (TCon "Int") (TCon "Int")))
+        , Def
+            "f"
+            (Lam
+               "n"
+               (If
+                  (App (App (Var "eq") (Var "n")) (Lit (Int 0)))
+                  (Lit (Int 1))
+                  (App
+                     (App (Var "mul") (Var "n"))
+                     (App
+                        (Var "f")
+                        (App (App (Var "sub") (Var "n")) (Lit (Int 1)))))))
+        ]
+        (Just (App (Var "f") (Lit (Int 5))))

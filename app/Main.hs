@@ -49,31 +49,17 @@ exec :: Bool -> L.Text -> Repl ()
 exec update source = do
   st <- get
   mod <- hoistParseErr $ parse program "" source
-  let (Program defs expr) = mod
+  let (Syntax.Program defs expr) = mod
   let expr' =
         case expr of
           Nothing -> []
           Just e -> [Syntax.Def "it" e]
   let tops = defs ++ expr'
-  let defs' =
-        catMaybes $
-        map
-          (\top ->
-             case top of
-               def@Syntax.Def {} -> Just def
-               _ -> Nothing)
-          tops
-  let decs' =
-        catMaybes $
-        map
-          (\top ->
-             case top of
-               (Dec x sc) -> Just (x, sc)
-               _ -> Nothing)
-          tops
+  let defs' = definitions tops
+  let decs' = declarations tops
   let tyctx' = tyctx st `extends` decs'
   tyctx'' <- hoistErr $ inferTop tyctx' defs'
-  let st' = st {tyctx = tyctx''}
+  let st' = st {tyctx = tyctx' <> tyctx''}
   when update (put st')
 
 showOutput :: String -> IState -> Repl ()

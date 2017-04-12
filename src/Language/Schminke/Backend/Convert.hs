@@ -43,9 +43,9 @@ debruijn = debruijn' []
         Syntax.Var x -> x'
           where x' =
                   case lookup x ctx of
-                    Nothing -> Delta x
+                    Nothing -> Del x
                     Just n' -> (Core.Var (fromIntegral n'))
-        Lam x body -> Lambda (debruijn' ctx' body)
+        Syntax.Lam x body -> Core.Lam (debruijn' ctx' body)
           where ctx' = (x, 0) : incr ctx
         x@Syntax.Let {} -> debruijn' ctx (desugar x)
         x@Syntax.If {} -> debruijn' ctx (desugar x)
@@ -61,6 +61,7 @@ desugar :: Syntax.Expr -> Syntax.Expr
 desugar x@Syntax.Lit {} = x
 desugar x@Syntax.Var {} = x
 desugar (Syntax.Lam x body) = Syntax.Lam x (desugar body)
-desugar (Syntax.Let x e body) = Syntax.App (Lam x (desugar body)) (desugar e)
+desugar (Syntax.Let x e body) =
+  Syntax.App (Syntax.Lam x (desugar body)) (desugar e)
 desugar (Syntax.If cond tr fl) = Syntax.App (Syntax.App cond tr) fl
 desugar (Syntax.App e1 e2) = Syntax.App (desugar e1) (desugar e2)

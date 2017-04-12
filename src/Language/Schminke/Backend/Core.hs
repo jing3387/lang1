@@ -4,18 +4,9 @@ type Name = String
 
 data Expr
   = Lit Literal
-  -- Lambda bound variables.
-  | Var Word
-  -- Let bound variables introduced by A-normalization.
-  | Alpha Word
-  -- Definition references.
-  | Delta Name
-  | Lambda Expr
-  -- Let is a meta-construct introduced by A-normalization. Let expressions from
-  -- the frontend get desugared into lambdas.
-  | Let Word
-        Expr
-        Expr
+  | Var Int
+  | Del Name
+  | Lam Expr
   | App Expr
         Expr
   deriving (Show, Eq, Ord)

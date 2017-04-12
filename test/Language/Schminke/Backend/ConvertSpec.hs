@@ -24,16 +24,16 @@ parseProgram input =
 spec :: Spec
 spec = do
   describe "debruijn" $ do
-    it "should convert an integer to an integer" $
+    it "should convert an integer" $
       debruijn (Syntax.Lit (Syntax.Int 0)) `shouldBe` Core.Lit (Core.Int 0)
-    it "should convert a naked variable into a definition reference" $
-      debruijn (Syntax.Var "x") `shouldBe` Core.Delta "x"
+    it "should convert a naked variable" $
+      debruijn (Syntax.Var "x") `shouldBe` Core.Del "x"
     it "should convert the identity function" $
       debruijn (Syntax.Lam "x" (Syntax.Var "x")) `shouldBe`
-      (Core.Lambda (Core.Var 0))
+      (Core.Lam (Core.Var 0))
     it "should convert the constant function" $
       debruijn (Syntax.Lam "x" (Syntax.Lam "y" (Syntax.Var "x"))) `shouldBe`
-      (Core.Lambda (Core.Lambda (Core.Var 1)))
+      (Core.Lam (Core.Lam (Core.Var 1)))
     it "should convert the composition function" $
       debruijn
         (Syntax.Lam
@@ -45,13 +45,13 @@ spec = do
                  (Syntax.App
                     (Syntax.Var "f")
                     (Syntax.App (Syntax.Var "g") (Syntax.Var "x")))))) `shouldBe`
-      (Core.Lambda
-         (Core.Lambda
-            (Core.Lambda
+      (Core.Lam
+         (Core.Lam
+            (Core.Lam
                (Core.App (Core.Var 2) (Core.App (Core.Var 1) (Core.Var 0))))))
     it "should convert a let expression with one binding" $
       debruijn (Syntax.Let "x" (Syntax.Lit (Syntax.Int 1)) (Syntax.Var "x")) `shouldBe`
-      (Core.App (Core.Lambda (Core.Var 0)) (Core.Lit (Core.Int 1)))
+      (Core.App (Core.Lam (Core.Var 0)) (Core.Lit (Core.Int 1)))
     it
       "should convert a let expression where a later binding references an earlier binding" $
       --    (let (x 1) (let (y x) x))
@@ -63,7 +63,7 @@ spec = do
            (Syntax.Lit (Syntax.Int 1))
            (Syntax.Let "y" (Syntax.Var "x") (Syntax.Var "x"))) `shouldBe`
       (Core.App
-         (Core.Lambda (Core.App (Core.Lambda (Core.Var 1)) (Core.Var 0)))
+         (Core.Lam (Core.App (Core.Lam (Core.Var 1)) (Core.Var 0)))
          (Core.Lit (Core.Int 1)))
     it "should convert an if expression" $
       debruijn
@@ -76,7 +76,7 @@ spec = do
       (Core.App
          (Core.App
             (Core.App
-               (Core.App (Core.Delta "eq") (Core.Lit (Core.Int 0)))
+               (Core.App (Core.Del "eq") (Core.Lit (Core.Int 0)))
                (Core.Lit (Core.Int 0)))
             (Core.Lit (Core.Int 0)))
          (Core.Lit (Core.Int 1)))
@@ -88,19 +88,19 @@ spec = do
       Core.Program
         [ Core.Def
             "f"
-            (Core.Lambda
+            (Core.Lam
                (Core.App
                   (Core.App
                      (Core.App
-                        (Core.App (Core.Delta "eq") (Core.Var 0))
+                        (Core.App (Core.Del "eq") (Core.Var 0))
                         (Core.Lit (Core.Int 0)))
                      (Core.Lit (Core.Int 1)))
                   (Core.App
-                     (Core.App (Core.Delta "mul") (Core.Var 0))
+                     (Core.App (Core.Del "mul") (Core.Var 0))
                      (Core.App
-                        (Core.Delta "f")
+                        (Core.Del "f")
                         (Core.App
-                           (Core.App (Core.Delta "sub") (Core.Var 0))
+                           (Core.App (Core.Del "sub") (Core.Var 0))
                            (Core.Lit (Core.Int 1)))))))
         ]
         Nothing

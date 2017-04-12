@@ -22,14 +22,8 @@ instance Pretty Literal where
 instance Pretty Expr where
   ppr p (Lit l) = ppr p l
   ppr p (Var n) = text "λ" <> integer (fromIntegral n)
-  ppr p (Alpha a) = text "α" <> integer (fromIntegral a)
-  ppr p (Delta d) = ppr p d
-  ppr p (Lambda body) = parens $ text "λ" $$ nest 1 (ppr p body)
-  ppr p (Let x e body) =
-    parens $
-    text "let" <+>
-    parens (text "α" <> integer (fromIntegral x) <+> ppr p e) $$
-    nest 1 (ppr p body)
+  ppr p (Del d) = ppr p d
+  ppr p (Lam body) = parens $ text "lambda" $$ nest 1 (ppr p body)
   ppr p (App f arg) = parens $ ppr p f <+> ppr p arg
 
 instance Pretty Top where

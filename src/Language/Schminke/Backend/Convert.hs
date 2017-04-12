@@ -22,19 +22,20 @@ convert (Syntax.Program defs expr) =
     (case expr of
        Nothing -> Nothing
        Just expr' ->
-         let deBruijnExpr = debruijn expr'
+         let deBruijnExpr = debruijn ns expr'
          in Just deBruijnExpr)
   where
-    defs' = convertTop defs
+    defs' = convertTop ns defs
+    ns = names defs
 
-convertTop :: [Syntax.Top] -> [Core.Top]
-convertTop [] = []
-convertTop ((Syntax.Def x body):rest) =
-  Core.Def x (debruijn body) : convertTop rest
-convertTop (_:rest) = convertTop rest
+convertTop :: [Type.Name] -> [Syntax.Top] -> [Core.Top]
+convertTop _ [] = []
+convertTop defs ((Syntax.Def x body):rest) =
+  Core.Def x (debruijn defs body) : convertTop defs rest
+convertTop defs (_:rest) = convertTop defs rest
 
-debruijn :: Syntax.Expr -> Core.Expr
-debruijn = debruijn' []
+debruijn :: [Type.Name] -> Syntax.Expr -> Core.Expr
+debruijn defs e = debruijn' [] e
   where
     debruijn' :: Ctx -> Syntax.Expr -> Core.Expr
     debruijn' ctx expr =
@@ -43,12 +44,17 @@ debruijn = debruijn' []
         Syntax.Var x -> x'
           where x' =
                   case lookup x ctx of
-                    Nothing -> Del x
+                    Nothing ->
+                      if x `elem` defs
+                        then Del x
+                        else Pop x
                     Just n' -> (Core.Var (fromIntegral n'))
         Syntax.Lam x body -> Core.Lam (debruijn' ctx' body)
           where ctx' = (x, 0) : incr ctx
-        x@Syntax.Let {} -> debruijn' ctx (desugar x)
-        x@Syntax.If {} -> debruijn' ctx (desugar x)
+        Syntax.Let x e1 e2 -> Core.Let (debruijn' ctx' e1) (debruijn' ctx' e2)
+          where ctx' = (x, 0) : incr ctx
+        Syntax.If cond tr fl ->
+          Core.If (debruijn' ctx cond) (debruijn' ctx tr) (debruijn' ctx fl)
         Syntax.App f arg -> Core.App (debruijn' ctx f) (debruijn' ctx arg)
 
 incr :: Ctx -> Ctx
@@ -57,11 +63,7 @@ incr ctx = zip names indices'
     (names, indices) = unzip ctx
     indices' = map (+ 1) indices
 
-desugar :: Syntax.Expr -> Syntax.Expr
-desugar x@Syntax.Lit {} = x
-desugar x@Syntax.Var {} = x
-desugar (Syntax.Lam x body) = Syntax.Lam x (desugar body)
-desugar (Syntax.Let x e body) =
-  Syntax.App (Syntax.Lam x (desugar body)) (desugar e)
-desugar (Syntax.If cond tr fl) = Syntax.App (Syntax.App cond tr) fl
-desugar (Syntax.App e1 e2) = Syntax.App (desugar e1) (desugar e2)
+names :: [Syntax.Top] -> [Type.Name]
+names [] = []
+names ((Syntax.Def name _):rest) = name : names rest
+names (_:rest) = names rest

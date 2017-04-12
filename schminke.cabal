@@ -27,8 +27,6 @@ library
                      , Language.Schminke.Backend.Core
                      , Language.Schminke.Backend.Convert
                      , Language.Schminke.Backend.Normalize
-                     , Language.Schminke.Backend.Parser
-                     , Language.Schminke.Backend.Eval
   other-modules:       Language.Schminke.Frontend.Lexer
                      , Language.Schminke.Backend.Reduce
   build-depends:       base >= 4.7 && < 5
@@ -62,7 +60,6 @@ test-suite schminke-test
                      , Language.Schminke.Frontend.InferSpec
                      , Language.Schminke.Backend.ConvertSpec
                      , Language.Schminke.Backend.NormalizeSpec
-                     , Language.Schminke.Backend.EvalSpec
   build-depends:       base
                      , schminke
                      , containers

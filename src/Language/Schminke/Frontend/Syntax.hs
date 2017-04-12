@@ -5,16 +5,10 @@ import Language.Schminke.Frontend.Type
 data Expr
   = Lit Literal
   | Var Name
-  | Lam Name
-        Expr
-  | Let Name
-        Expr
-        Expr
-  | If Expr
-       Expr
-       Expr
-  | App Expr
-        Expr
+  | Lam Name Expr
+  | Let Name Expr Expr
+  | If Expr Expr Expr
+  | App Expr Expr
   deriving (Show, Eq, Ord)
 
 data Literal =

@@ -6,7 +6,13 @@ data Expr
   = Lit Literal
   | Var Int
   | Del Name
+  | Pop Name
   | Lam Expr
+  | Let Expr
+        Expr
+  | If Expr
+       Expr
+       Expr
   | App Expr
         Expr
   deriving (Show, Eq, Ord)

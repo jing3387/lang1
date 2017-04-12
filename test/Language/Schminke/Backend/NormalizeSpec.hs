@@ -10,7 +10,6 @@ import Text.Megaparsec
 import Language.Schminke.Backend.Convert
 import Language.Schminke.Backend.Core
 import Language.Schminke.Backend.Normalize
-import Language.Schminke.Backend.Parser
 import Language.Schminke.Frontend.Parser
 
 normTerm :: String -> Expr
@@ -18,7 +17,7 @@ normTerm input =
   case parse expression "" (L.pack input) of
     Left err -> error $ parseErrorPretty err
     Right ast ->
-      let core = debruijn ast
+      let core = debruijn [] ast
       in normalizeTerm core
 
 normDefine :: String -> Program
@@ -31,15 +30,9 @@ normDefine input =
 
 parseExpr :: String -> Expr
 parseExpr input =
-  case parse coreExpr "" (L.pack input) of
+  case parse expression "" (L.pack input) of
     Left err -> error $ parseErrorPretty err
-    Right expr -> expr
-
-parseProg :: String -> Program
-parseProg input =
-  case parse coreProg "" (L.pack input) of
-    Left err -> error $ parseErrorPretty err
-    Right prog -> prog
+    Right expr -> debruijn [] expr
 
 main :: IO ()
 main = hspec spec

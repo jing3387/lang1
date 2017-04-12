@@ -21,6 +21,7 @@ shift d t = walk 0 t
           if n >= c
             then Var (n + d)
             else x
+        x@Pop {} -> x
         x@Del {} -> x
         Lam t1 -> Lam $ walk (c + 1) t1
         App t1 t2 -> App (walk c t1) (walk c t2)
@@ -36,6 +37,7 @@ subst j s t = walk 0 t
           if n == j + c
             then shift c s
             else x
+        x@Pop {} -> x
         x@Del {} -> x
         Lam t1 -> Lam $ walk (c + 1) t1
         App t1 t2 -> App (walk c t1) (walk c t2)

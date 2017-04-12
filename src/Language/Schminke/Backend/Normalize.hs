@@ -28,6 +28,10 @@ normalize :: Int -> Expr -> (Int -> Expr -> Expr) -> Expr
 normalize c m k =
   case m of
     (Lam body) -> k c (Lam (normalizeTerm body))
+    (Let m1 m2) ->
+      normalize c m1 (\c' n1 -> Let n1 (normalize c' m2 k))
+    (If m1 m2 m3) ->
+      normalizeName c m1 (\c' t -> k c' (If t (normalizeTerm m2) (normalizeTerm m3)))
     (App f m') ->
       normalizeName
         c
@@ -55,11 +59,12 @@ normalizeName c m k = do
     (\c' n ->
        if isval n
          then k c' n
-         else App (Lam (k (c' + 1) (Var (negate c')))) n)
+         else Let n (k (c' + 1) (Var (negate c'))))
 
 isval :: Expr -> Bool
 isval Lit {} = True
 isval Var {} = True
 isval Lam {} = True
 isval Del {} = True
+isval Pop {} = True
 isval _ = False

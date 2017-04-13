@@ -10,9 +10,9 @@ local [type inference](https://en.wikipedia.org/wiki/Type_inference).
   Unicode symbol, can contain digits thereafter
 * `(lambda (<symbol>*) <expr>)`: create an anonymous function introducing zero
   or more parameters that can be used in the body
-* `(define <symbol> <expr>)`: create a global definition `x`i usually used to
-  name a `lambda`; allows for recursion; requires a corresponding declaration;
-  definitions can refer to earlier definitions allowing for mutual recursion
+* `(define <symbol> <expr>)`: create a global definition; usually used to name a
+  `lambda`; allows for recursion; requires a corresponding declaration;
+  definitions can refer to later definitions allowing for mutual recursion
 * `(declare <symbol> : <type>)`: declare the type of a global definition;
   required for all global definitions
 * `(let ((<symbol> <expr>)*) <expr>)`: create local definitions; definitions are

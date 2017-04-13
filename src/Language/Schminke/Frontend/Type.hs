@@ -17,6 +17,7 @@ data Type
          Type
   | TArr Type
          Type
+  | TRef Type
   deriving (Show, Eq, Ord)
 
 data Scheme =
@@ -26,9 +27,6 @@ data Scheme =
 
 i :: Integer -> Type
 i n = TCon ("i" ++ show n)
-
-ops :: [String]
-ops = [".", "->", "+", "*"]
 
 sum :: Type -> Type -> Type
 sum (TSum t1a t1b) (TSum t2a t2b) =

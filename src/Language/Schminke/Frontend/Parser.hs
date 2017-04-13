@@ -10,6 +10,7 @@ import qualified Data.Text.Lazy as L
 import Text.Megaparsec
 import Text.Megaparsec.Expr
 import Text.Megaparsec.Text.Lazy
+import Prelude hiding (sum)
 
 import Language.Schminke.Frontend.Lexer
 import Language.Schminke.Frontend.Syntax as Syntax
@@ -59,7 +60,6 @@ declare :: Parser Top
 declare = do
   reserved "declare"
   x <- identifier
-  symbol ":"
   sc <- scheme
   return $ Dec x sc
 
@@ -101,28 +101,37 @@ tvar tvs = do
   x <- foldr (\x p -> x <|> p) mzero (map tv tvs)
   return $ TVar x
 
-tterm :: [TVar] -> Parser Type
-tterm tvs = parens (texpr tvs) <|> try (tvar tvs) <|> tcon
+tarr :: [TVar] -> Parser Type
+tarr tvs = do
+  retty <- texpr tvs
+  argtys <- parens $ many $ texpr tvs
+  return $ foldr TArr retty argtys
 
-tops =
-  [ [InfixL (TPro <$ symbol "*")]
-  , [InfixL (TSum <$ symbol "+")]
-  , [InfixR (TArr <$ symbol "->")]
-  ]
+tsum :: [TVar] -> Parser Type
+tsum tvs = do
+  reserved "union"
+  elemtys <- some $ texpr tvs
+  return $ foldr1 sum elemtys
+
+tpro :: [TVar] -> Parser Type
+tpro tvs = do
+  reserved "struct"
+  elemtys <- some $ texpr tvs
+  return $ foldr1 TPro elemtys
+
+tref :: [TVar] -> Parser Type
+tref tvs = do
+  reserved "*"
+  elemty <- texpr tvs
+  return $ TRef elemty
 
 texpr :: [TVar] -> Parser Type
-texpr tvs = makeExprParser (tterm tvs) tops
+texpr tvs = try (tvar tvs) <|> tcon <|> parens (tsum tvs <|> tpro tvs <|> tref tvs <|> tarr tvs)
 
 scheme :: Parser Scheme
 scheme = do
-  forall <- optional $ reserved "forall"
-  case forall of
-    Nothing -> do
-      ty <- texpr []
-      return $ Forall [] ty
-    _ -> do
-      tvs <- many typeId
-      let tvs' = map TV tvs
-      symbol "."
-      ty <- texpr tvs'
-      return $ Forall tvs' ty
+  tvs <- parens $ many identifier
+  let tvs' = map TV tvs
+  retty <- texpr tvs'
+  argtys <- parens $ many $ texpr tvs'
+  return $ Forall tvs' (foldr TArr retty argtys)

@@ -43,7 +43,7 @@ reservedWords :: [String]
 reservedWords = ["declare", "define", "if", "let"]
 
 reservedTypes :: [String]
-reservedTypes = ["forall"] ++ ops
+reservedTypes = ["union", "struct", "*"]
 
 typeId :: Parser String
 typeId = (lexeme . try) (p >>= check)

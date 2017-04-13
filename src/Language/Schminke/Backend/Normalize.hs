@@ -7,7 +7,6 @@ import Control.Monad.State
 
 import Language.Schminke.Backend.Convert
 import Language.Schminke.Backend.Core
-import Language.Schminke.Backend.Reduce
 
 normalizeProgram :: Program -> Program
 normalizeProgram (Program defs expr) = Program defs' expr'
@@ -19,7 +18,7 @@ normalizeProgram (Program defs expr) = Program defs' expr'
         Just e -> Just $ normalizeTerm 0 e
 
 normalizeDefine :: Top -> Top
-normalizeDefine (Def x e) = Def x (normalizeTerm 0 e)
+normalizeDefine (Def x args body) = Def x args (map (normalizeTerm 0) body)
 
 normalizeTerm :: Int -> Expr -> Expr
 normalizeTerm c m = normalize c m (\c' x -> x)
@@ -27,7 +26,6 @@ normalizeTerm c m = normalize c m (\c' x -> x)
 normalize :: Int -> Expr -> (Int -> Expr -> Expr) -> Expr
 normalize c m k =
   case m of
-    (Lam body) -> k c (Lam (normalizeTerm c body))
     (Let x m1 m2) -> normalize c m1 (\c' n1 -> Let x n1 (normalize c' m2 k))
     (If m1 m2 m3) ->
       normalizeName
@@ -51,22 +49,10 @@ normalizeName c m k = do
        if isval n
          then k c' n
          else let x = show c'
-              in Let x n (k (c' + 1) (Del x)))
-
-convt :: Int -> Expr -> Expr
-convt c e =
-  case e of
-    Var x
-      | x < 0 -> Var (c - negate x)
-    Lam e1 -> Lam (convt c e1)
-    App e1 e2 -> App (convt c e1) (convt c e2)
-    If cond tr fl -> If (convt c cond) (convt c tr) (convt c fl)
-    x -> x
+              in Let x n (k (c' + 1) (Var x)))
 
 isval :: Expr -> Bool
 isval Lit {} = True
 isval Var {} = True
-isval Lam {} = True
-isval Del {} = True
 isval Pop {} = True
 isval _ = False

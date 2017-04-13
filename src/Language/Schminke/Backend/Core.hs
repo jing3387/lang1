@@ -4,10 +4,8 @@ type Name = String
 
 data Expr
   = Lit Literal
-  | Var Int
-  | Del Name
+  | Var Name
   | Pop Name
-  | Lam Expr
   | Let Name
         Expr
         Expr
@@ -23,8 +21,7 @@ data Literal =
   deriving (Show, Eq, Ord)
 
 data Top =
-  Def Name
-      Expr
+  Def Name [Name] [Expr]
   deriving (Show, Eq, Ord)
 
 data Program =

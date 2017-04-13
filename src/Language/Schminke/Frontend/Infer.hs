@@ -10,18 +10,19 @@ module Language.Schminke.Frontend.Infer
   , constraintsExpr
   ) where
 
-import Language.Schminke.Frontend.Env as Env
-import Language.Schminke.Frontend.Syntax
-import Language.Schminke.Frontend.Type
-
 import Control.Monad.Except
 import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
-
+import Data.Either
 import Data.List (nub)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import Prelude hiding (sum)
+
+import Language.Schminke.Frontend.Env as Env
+import Language.Schminke.Frontend.Syntax
+import Language.Schminke.Frontend.Type
 
 type Infer a = (ReaderT Env (StateT InferState (Except TypeError)) a)
 
@@ -153,14 +154,10 @@ generalize env t = Forall as t
 infer :: Expr -> Infer (Type, [Constraint])
 infer expr =
   case expr of
-    Lit (Int _) -> return (typeInt, [])
+    Lit (Int _) -> return (i 64, [])
     Var x -> do
       t <- lookupEnv x
       return (t, [])
-    Lam x e -> do
-      tv <- fresh
-      (t, c) <- inEnv (x, Forall [] tv) (infer e)
-      return (tv `TArr` t, c)
     App e1 e2 -> do
       (t1, c1) <- infer e1
       (t2, c2) <- infer e2
@@ -179,18 +176,18 @@ infer expr =
       (t1, c1) <- infer cond
       (t2, c2) <- infer tr
       (t3, c3) <- infer fl
-      tv1 <- fresh
-      tv2 <- fresh
-      let t = typeSum t2 t3
       return
-        (t, c1 ++ c2 ++ c3 ++ [(t1, (TArr tv1 (TArr tv2 (typeSum tv1 tv2))))])
+        (t2, c1 ++ c2 ++ c3 ++ [(t1, (i 1)), (t2, t3)])
 
-inferTop :: Env -> [Top] -> Either TypeError Env
+inferTop :: Env -> [Top] -> Either [TypeError] Env
 inferTop env [] = Right env
-inferTop env ((Def name ex):xs) =
-  case inferExpr env ex of
-    Left err -> Left err
-    Right ty -> inferTop (extend env (name, ty)) xs
+inferTop env ((Def name args body):xs) =
+  let infers = map (inferExpr env) body in
+  let ty = last $ rights infers in
+  let errs = lefts infers in
+  if not (null errs)
+    then Left errs
+    else inferTop (extend env (name, ty)) xs
 inferTop env ((Dec x ty):xs) = inferTop (env `extend` (x, ty)) xs
 
 normalize :: Scheme -> Scheme
@@ -203,7 +200,7 @@ normalize (Forall _ body) = Forall (map snd ord) (normtype body)
     fv (TPro a b) = fv a ++ fv b
     fv (TCon _) = []
     normtype (TArr a b) = TArr (normtype a) (normtype b)
-    normtype (TSum a b) = typeSum (normtype a) (normtype b)
+    normtype (TSum a b) = sum (normtype a) (normtype b)
     normtype (TPro a b) = TPro (normtype a) (normtype b)
     normtype (TCon a) = TCon a
     normtype (TVar a) =

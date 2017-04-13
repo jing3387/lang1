@@ -53,7 +53,7 @@ exec update source = do
   let expr' =
         case expr of
           Nothing -> []
-          Just e -> [Syntax.Def "it" e]
+          Just e -> [Syntax.Def "it" [] [e]]
   let tops = defs ++ expr'
   let defs' = definitions tops
   let decs' = declarations tops

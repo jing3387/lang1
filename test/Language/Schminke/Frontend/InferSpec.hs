@@ -53,28 +53,16 @@ spec = do
       it "should infer the type scheme of the `add` operation" $
         typeof "(add 1 2)" `shouldBe` parseScheme "forall. Int"
       it "should infer the type scheme of `eq` operation" $
-        typeof "(eq 0 1)" `shouldBe` parseScheme "forall a b. a -> b -> a + b"
-      it "should infer the type scheme of the identity function" $
-        typeof "(lambda (x) x)" `shouldBe` parseScheme "forall a. a -> a"
-      it "should infer the type scheme of the constant function" $
-        typeof "(lambda (x y) x)" `shouldBe`
-        parseScheme "forall a b. a -> b -> a"
-      it "should infer the type scheme of the compose function" $
-        typeof "(lambda (f g x) (f (g x)))" `shouldBe`
-        parseScheme "forall a b c. (a -> b) -> (c -> a) -> c -> b"
-      it
-        "should infer the type scheme of the identity function when passed an integer" $
-        typeof "((lambda (x) x) 0)" `shouldBe` parseScheme "forall. Int"
+        typeof "(eq 0 1)" `shouldBe` parseScheme "forall a. a -> b -> i1"
     context "when given an ill-typed program" $ do
       it "should not infer a type scheme when there is a type error" $
         evaluate (typeof "(add (eq 1 0) 1)") `shouldThrow` anyErrorCall
       it "should not infer a type scheme when a variable is unbound" $
         evaluate (typeof "y") `shouldThrow` anyErrorCall
-      it "should not infer a type scheme when given an infinite type" $
-        evaluate (typeof "(lambda (x) (x x))") `shouldThrow` anyErrorCall
+      it "should not infer a type scheme when given an infinite type" $ pending
   describe "inferTop" $ do
     it "should infer the type of the factorial function" $
       (typeofProgram
-         "(declare f : forall. Int -> Int) (define f (lambda (n) (if (eq n 0) 1 (mul n (f (sub n 1))))))") Map.!
+         "(declare f : Int -> Int) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))") Map.!
       "f" `shouldBe`
-      parseScheme "forall. Int -> Int"
+      parseScheme "Int -> Int"

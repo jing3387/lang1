@@ -26,14 +26,6 @@ spec = do
       it "parses a binary operator" $
         parse expression "" (L.pack "(add 1 2)") `shouldParse`
         (App (App (Var "add") (Lit (Int 1))) (Lit (Int 2)))
-      it "parses a lambda expression with no arguments" $
-        parse expression "" (L.pack "(lambda () x)") `shouldParse` (Var "x")
-      it "parses a lambda expression with one argument" $
-        parse expression "" (L.pack "(lambda (x) x)") `shouldParse`
-        (Lam "x" (Var "x"))
-      it "parses a lambda expression with multiple arguments" $
-        parse expression "" (L.pack "(lambda (x y) x)") `shouldParse`
-        (Lam "x" (Lam "y" (Var "x")))
       it "parses a let expression with no bindings" $
         parse expression "" (L.pack "(let () x)") `shouldParse` (Var "x")
       it "parses a let expression with one binding" $
@@ -52,14 +44,10 @@ spec = do
         parse expression "" (L.pack "(f)") `shouldParse` (Var "f")
       it "parses an application with one argument" $
         parse expression "" (L.pack "(f 0)") `shouldParse`
-        (App (Var "f") (Lit (Int 0)))
+        App (Var "f") (Lit (Int 0))
       it "parses an application with multiple arguments" $
-        parse expression "" (L.pack "((lambda (f x) (f x)) (lambda (x) x) 0)") `shouldParse`
-        (App
-           (App
-              (Lam "f" (Lam "x" (App (Var "f") (Var "x"))))
-              (Lam "x" (Var "x")))
-           (Lit (Int 0)))
+        parse expression "" (L.pack "(f 0 1)") `shouldParse`
+        App (App (Var "f") (Lit (Int 0))) (Lit (Int 1))
     context "when provided with invalid input" $ do
       it "should not parse an unmatched left parenthesis" $
         parse expression "" `shouldFailOn` (L.pack "(")
@@ -69,14 +57,12 @@ spec = do
         parse expression "" `shouldFailOn` (L.pack "0.0")
       it "should not parse an empty list" $
         parse expression "" `shouldFailOn` (L.pack "()")
-      it "should not parse an empty lambda expression" $
-        parse expression "" `shouldFailOn` (L.pack "(lambda ())")
-      it "should not parse an empty let expression" $
+      it "should not parse an empty let body" $
         parse expression "" `shouldFailOn` (L.pack "(let ())")
   describe "program" $ do
     it "should parse a declaration of an integer type" $
-      parse program "" (L.pack "(declare x : forall. Int)") `shouldParse`
-      Program [Dec "x" (Forall [] (TCon "Int"))] Nothing
+      parse program "" (L.pack "(declare x : i64)") `shouldParse`
+      Program [Dec "x" (Forall [] (TCon "i64"))] Nothing
     it "should parse a declaration of the identity function" $
       parse program "" (L.pack "(declare id : forall a. a -> a)") `shouldParse`
       Program
@@ -86,15 +72,15 @@ spec = do
       parse
         program
         ""
-        (L.pack "(declare foo : forall a b. Int -> Int -> a + b)") `shouldParse`
+        (L.pack "(declare foo : forall a b. i1 -> i2 -> a + b)") `shouldParse`
       Program
         [ Dec
             "foo"
             (Forall
                [TV "a", TV "b"]
                (TArr
-                  (TCon "Int")
-                  (TArr (TCon "Int") (TSum (TVar (TV "a")) (TVar (TV "b"))))))
+                  (TCon "i1")
+                  (TArr (TCon "i2") (TSum (TVar (TV "a")) (TVar (TV "b"))))))
         ]
         Nothing
     it "should parse the factorial program" $
@@ -102,20 +88,19 @@ spec = do
         program
         ""
         (L.pack
-           "(declare f : forall. Int -> Int) (define f (lambda (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))) (f 5)") `shouldParse`
+           "(declare f : i64 -> i64) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1))))) (f 5)") `shouldParse`
       Program
-        [ Dec "f" (Forall [] (TArr (TCon "Int") (TCon "Int")))
+        [ Dec "f" (Forall [] (TArr (TCon "i64") (TCon "i64")))
         , Def
-            "f"
-            (Lam
-               "n"
-               (If
-                  (App (App (Var "eq") (Var "n")) (Lit (Int 0)))
-                  (Lit (Int 1))
+            "f" 
+            ["n"]
+            [(If
+              (App (App (Var "eq") (Var "n")) (Lit (Int 0)))
+              (Lit (Int 1))
+              (App
+                  (App (Var "mul") (Var "n"))
                   (App
-                     (App (Var "mul") (Var "n"))
-                     (App
-                        (Var "f")
-                        (App (App (Var "sub") (Var "n")) (Lit (Int 1)))))))
+                    (Var "f")
+                    (App (App (Var "sub") (Var "n")) (Lit (Int 1))))))]
         ]
         (Just (App (Var "f") (Lit (Int 5))))

@@ -20,14 +20,8 @@ int = do
 var :: Parser Expr
 var = do
   reserved "var"
-  x <- integer
-  return $ Var (fromIntegral x)
-
-del :: Parser Expr
-del = do
-  reserved "del"
   x <- identifier
-  return $ Del x
+  return $ Var x
 
 pop :: Parser Expr
 pop = do
@@ -35,14 +29,8 @@ pop = do
   x <- identifier
   return $ Pop x
 
-lambda :: Parser Expr
-lambda = do
-  reserved "lambda"
-  body <- expr
-  return $ Lam body
-
-let' :: Parser Expr
-let' = do
+let_ :: Parser Expr
+let_ = do
   reserved "let"
   bindings <-
     parens $
@@ -54,8 +42,8 @@ let' = do
   body <- expr
   return $ foldr (\(ident, expr) body -> Let ident expr body) body bindings
 
-if' :: Parser Expr
-if' = do
+if_ :: Parser Expr
+if_ = do
   reserved "if"
   cond <- expr
   tr <- expr
@@ -69,14 +57,15 @@ app = do
   return $ foldl App f args
 
 expr :: Parser Expr
-expr = parens (int <|> var <|> del <|> pop <|> lambda <|> let' <|> if' <|> app)
+expr = parens (int <|> var <|> pop <|> let_ <|> if_ <|> app)
 
 define :: Parser Top
 define = do
   reserved "define"
   x <- identifier
-  e <- expr
-  return $ Def x e
+  args <- many identifier
+  body <- many expr
+  return $ Def x args body
 
 top :: Parser Top
 top = try $ parens define

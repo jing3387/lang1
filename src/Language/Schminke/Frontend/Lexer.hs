@@ -37,18 +37,18 @@ reserved w =
   lexeme $
   try $ do
     string w
-    notFollowedBy identLetter <?> ("end of" ++ show w)
+    notFollowedBy identLetter <?> ("end of " ++ show w)
 
 reservedWords :: [String]
-reservedWords = ["declare", "define", "lambda", "if", "let"]
+reservedWords = ["declare", "define", "if", "let"]
 
 reservedTypes :: [String]
-reservedTypes = ["forall", "Int", "Bool"] ++ typeOps
+reservedTypes = ["forall"] ++ ops
 
-tvId :: Parser String
-tvId = (lexeme . try) (p >>= check)
+typeId :: Parser String
+typeId = (lexeme . try) (p >>= check)
   where
-    p = some lowerChar
+    p = (:) <$> identStart <*> many identLetter
     check x =
       if x `elem` reservedTypes
         then fail $ show x ++ " cannot be a type variable"

@@ -5,6 +5,7 @@ module Language.Schminke.Frontend.Parser
   , scheme
   ) where
 
+import Control.Monad (mzero)
 import qualified Data.Text.Lazy as L
 import Text.Megaparsec
 import Text.Megaparsec.Expr
@@ -24,15 +25,8 @@ var = do
   x <- identifier
   return (Var x)
 
-lambda :: Parser Expr
-lambda = do
-  reserved "lambda"
-  formals <- parens $ many identifier
-  body <- expr
-  return $ foldr Lam body formals
-
-let' :: Parser Expr
-let' = do
+let_ :: Parser Expr
+let_ = do
   reserved "let"
   bindings <-
     parens $
@@ -44,8 +38,8 @@ let' = do
   body <- expr
   return $ foldr (\(ident, expr) body -> Let ident expr body) body bindings
 
-if' :: Parser Expr
-if' = do
+if_ :: Parser Expr
+if_ = do
   reserved "if"
   cond <- expr
   tr <- expr
@@ -59,7 +53,7 @@ app = do
   return $ foldl App f args
 
 expr :: Parser Expr
-expr = int <|> var <|> parens (lambda <|> let' <|> if' <|> app)
+expr = int <|> var <|> parens (let_ <|> if_ <|> app)
 
 declare :: Parser Top
 declare = do
@@ -72,9 +66,10 @@ declare = do
 define :: Parser Top
 define = do
   reserved "define"
-  x <- identifier
-  e <- expr
-  return $ Def x e
+  name <- identifier
+  args <- parens $ many identifier
+  body <- many expr
+  return $ Def name args body
 
 top :: Parser Top
 top = try $ parens (declare <|> define)
@@ -91,28 +86,23 @@ expression = between sc eof expr
 program :: Parser Program
 program = between sc eof modl
 
-tint :: Parser Type
-tint = do
-  reserved "Int"
-  return typeInt
+tcon :: Parser Type
+tcon = do
+  x <- typeId
+  return $ TCon x
 
-tbool :: Parser Type
-tbool = do
-  reserved "Bool"
-  return typeBool
+tv :: TVar -> Parser TVar
+tv x@(TV s) = do
+  reserved s
+  return x
 
-tv :: Parser TVar
-tv = do
-  x <- tvId
-  return $ TV x
-
-tvar :: Parser Type
-tvar = do
-  x <- tv
+tvar :: [TVar] -> Parser Type
+tvar tvs = do
+  x <- foldr (\x p -> x <|> p) mzero (map tv tvs)
   return $ TVar x
 
-tterm :: Parser Type
-tterm = parens texpr <|> tint <|> tbool <|> tvar
+tterm :: [TVar] -> Parser Type
+tterm tvs = parens (texpr tvs) <|> try (tvar tvs) <|> tcon
 
 tops =
   [ [InfixL (TPro <$ symbol "*")]
@@ -120,13 +110,19 @@ tops =
   , [InfixR (TArr <$ symbol "->")]
   ]
 
-texpr :: Parser Type
-texpr = makeExprParser tterm tops
+texpr :: [TVar] -> Parser Type
+texpr tvs = makeExprParser (tterm tvs) tops
 
 scheme :: Parser Scheme
 scheme = do
-  reserved "forall"
-  tvs <- many tv
-  symbol "."
-  ty <- texpr
-  return $ Forall tvs ty
+  forall <- optional $ reserved "forall"
+  case forall of
+    Nothing -> do
+      ty <- texpr []
+      return $ Forall [] ty
+    _ -> do
+      tvs <- many typeId
+      let tvs' = map TV tvs
+      symbol "."
+      ty <- texpr tvs'
+      return $ Forall tvs' ty

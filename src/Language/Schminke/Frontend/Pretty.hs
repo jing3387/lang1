@@ -54,13 +54,14 @@ instance Pretty Literal where
 instance Pretty Expr where
   ppr p (Var x) = ppr p x
   ppr p (Lit l) = ppr p l
-  ppr p (Lam x body) = parens $ text "λ" <+> ppr p x $$ nest 1 (ppr p body)
   ppr p (Let x e body) =
     parens $ text "let" <+> parens (ppr p x <+> ppr p e) $$ nest 1 (ppr p body)
   ppr p (App f arg) = parens $ ppr p f <+> ppr p arg
 
 instance Pretty Top where
-  ppr p (Def x body) = parens $ text "define" <+> ppr p x $$ nest 1 (ppr p body)
+  ppr p (Def x args body) = 
+    parens $ text "define" <+> ppr p x <+> parens (hsep $ map (ppr p) args)
+    $$ nest 1 (vcat $ map (ppr p) body)
   ppr p (Dec x ty) = parens $ text "declare" <+> ppr p x <+> ppr p ty
 
 instance Pretty Program where

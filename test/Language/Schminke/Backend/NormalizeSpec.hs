@@ -18,7 +18,7 @@ normTerm input =
   case parse Syntax.expression "" (L.pack input) of
     Left err -> error $ parseErrorPretty err
     Right ast ->
-      let core = debruijn [] ast
+      let core = convertExpr [] ast
       in normalizeTerm 0 core
 
 normProg :: String -> Program

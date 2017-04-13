@@ -17,13 +17,13 @@ instance Pretty Name where
   ppr _ x = text x
 
 instance Pretty Literal where
-  ppr _ (Int i) = integer i
+  ppr _ (Int i) = parens $ text "int" <+> integer i
 
 instance Pretty Expr where
   ppr p (Lit l) = ppr p l
-  ppr p (Var n) = text "λ" <> integer (fromIntegral n)
-  ppr p (Del d) = ppr p d
-  ppr p (Pop prim) = ppr p prim
+  ppr p (Var n) = parens $ text "var" <+> integer (fromIntegral n)
+  ppr p (Del d) = parens $ text "del" <+> ppr p d
+  ppr p (Pop prim) = parens $ text "pop" <+> ppr p prim
   ppr p (Lam body) = parens $ text "lambda" $$ nest 1 (ppr p body)
   ppr p (Let x e1 e2) =
     parens $ text "let" <+> parens (ppr p x <+> ppr p e1) $$ nest 1 (ppr p e2)

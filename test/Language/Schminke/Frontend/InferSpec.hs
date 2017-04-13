@@ -49,20 +49,21 @@ spec = do
   describe "constraintsExpr" $ do
     context "when given a well-typed program" $ do
       it "should infer the type scheme of an integer" $
-        typeof "0" `shouldBe` parseScheme "forall. Int"
+        typeof "0" `shouldBe` parseScheme "() i64 ()"
       it "should infer the type scheme of the `add` operation" $
-        typeof "(add 1 2)" `shouldBe` parseScheme "forall. Int"
+        typeof "(add 1 2)" `shouldBe` parseScheme "() i64 ()"
       it "should infer the type scheme of `eq` operation" $
-        typeof "(eq 0 1)" `shouldBe` parseScheme "forall a. a -> b -> i1"
+        typeof "(eq 0 1)" `shouldBe` parseScheme "() i1 ()"
     context "when given an ill-typed program" $ do
       it "should not infer a type scheme when there is a type error" $
         evaluate (typeof "(add (eq 1 0) 1)") `shouldThrow` anyErrorCall
       it "should not infer a type scheme when a variable is unbound" $
         evaluate (typeof "y") `shouldThrow` anyErrorCall
-      it "should not infer a type scheme when given an infinite type" $ pending
+      it "should not infer a type scheme when given an infinite type" $
+        pendingWith "Have to figure out an example now that `lambda` is gone"
   describe "inferTop" $ do
     it "should infer the type of the factorial function" $
       (typeofProgram
-         "(declare f : Int -> Int) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))") Map.!
+         "(declare f () i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))") Map.!
       "f" `shouldBe`
-      parseScheme "Int -> Int"
+      parseScheme "() i64 (i64)"

@@ -5,13 +5,12 @@ import Language.Schminke.Frontend.Type
 data Expr
   = Lit Literal
   | Var Name
-  | Let Name Expr Expr
+  | Let [(Name, Expr)] [Expr]
   | If Expr Expr Expr
-  | App Expr Expr
+  | App Name [Expr]
   deriving (Show, Eq, Ord)
 
-data Literal
-  = Int Integer
+data Literal = Int Integer
   deriving (Show, Eq, Ord)
 
 data Top
@@ -19,9 +18,7 @@ data Top
   | Def Name [Name] [Expr]
   deriving (Show, Eq, Ord)
 
-data Program =
-  Program [Top]
-          (Maybe Expr)
+data Program = Program [Top] (Maybe Expr)
   deriving (Show, Eq, Ord)
 
 definitions :: [Top] -> [Top]

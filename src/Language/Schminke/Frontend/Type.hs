@@ -11,12 +11,9 @@ newtype TVar =
 data Type
   = TVar TVar
   | TCon String
-  | TPro Type
-         Type
-  | TSum Type
-         Type
-  | TArr Type
-         Type
+  | TPro Type Type
+  | TSum Type Type
+  | TArr Type [Type]
   | TRef Type
   deriving (Show, Eq, Ord)
 
@@ -46,10 +43,10 @@ sum t1 t2 =
 
 prims :: [(Name, Scheme)]
 prims =
-  [ ( "eq", Forall [TV "a"] (TArr (TVar (TV "a")) (TArr (TVar (TV "a")) (i 1))))
-  , ("add", Forall [TV "a"] (TArr (TVar (TV "a")) (TArr (TVar (TV "a")) (TVar (TV "a")))))
-  , ("sub", Forall [TV "a"] (TArr (TVar (TV "a")) (TArr (TVar (TV "a")) (TVar (TV "a")))))
-  , ("mul", Forall [TV "a"] (TArr (TVar (TV "a")) (TArr (TVar (TV "a")) (TVar (TV "a")))))
-  , ("sdiv", Forall [TV "a"] (TArr (TVar (TV "a")) (TArr (TVar (TV "a")) (TVar (TV "a")))))
-  , ("srem", Forall [TV "a"] (TArr (TVar (TV "a")) (TArr (TVar (TV "a")) (TVar (TV "a")))))
+  [ ( "eq", Forall [TV "a"] (TArr (i 1) [(TVar (TV "a")), (TVar (TV "a"))]))
+  , ( "add", Forall [] (TArr (i 64) [(i 64), (i 64)]))
+  , ( "sub", Forall [] (TArr (i 64) [(i 64), (i 64)]))
+  , ( "mul", Forall [] (TArr (i 64) [(i 64), (i 64)]))
+  , ( "sdiv", Forall [] (TArr (i 64) [(i 64), (i 64)]))
+  , ( "srem", Forall [] (TArr (i 64) [(i 64), (i 64)]))
   ]

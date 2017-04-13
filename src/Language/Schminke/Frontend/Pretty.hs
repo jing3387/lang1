@@ -36,7 +36,7 @@ instance Pretty TVar where
   ppr _ (TV x) = text x
 
 instance Pretty Type where
-  ppr p (TArr a b) = (parensIf (isArrow a) (ppr p a)) <+> text "->" <+> ppr p b
+  ppr p (TArr a b) = hsep (map (\x -> parensIf (isArrow x) (ppr p x) <+> text "->") b) <+> ppr p a
     where
       isArrow TArr {} = True
       isArrow _ = False
@@ -54,9 +54,10 @@ instance Pretty Literal where
 instance Pretty Expr where
   ppr p (Var x) = ppr p x
   ppr p (Lit l) = ppr p l
-  ppr p (Let x e body) =
-    parens $ text "let" <+> parens (ppr p x <+> ppr p e) $$ nest 1 (ppr p body)
-  ppr p (App f arg) = parens $ ppr p f <+> ppr p arg
+  ppr p (Let bs body) =
+    parens $ text "let" <+> parens (vcat $ map (\(x, e) -> parens $ ppr p x <+> ppr p e) bs) 
+    $$ nest 1 (vcat $ map (ppr p) body)
+  ppr p (App f args) = parens $ ppr p f <+> hsep (map (ppr p) args)
 
 instance Pretty Top where
   ppr p (Def x args body) = 

@@ -31,13 +31,13 @@ let_ = do
   reserved "let"
   bindings <-
     parens $
-    many $
+    some $
     parens $ do
       x <- identifier
       e <- expr
       return (x, e)
-  body <- expr
-  return $ foldr (\(ident, expr) body -> Let ident expr body) body bindings
+  body <- some expr
+  return $ Let bindings body
 
 if_ :: Parser Expr
 if_ = do
@@ -49,9 +49,9 @@ if_ = do
 
 app :: Parser Expr
 app = do
-  f <- expr
+  f <- identifier
   args <- many expr
-  return $ foldl App f args
+  return $ App f args
 
 expr :: Parser Expr
 expr = int <|> var <|> parens (let_ <|> if_ <|> app)
@@ -105,7 +105,7 @@ tarr :: [TVar] -> Parser Type
 tarr tvs = do
   retty <- texpr tvs
   argtys <- parens $ many $ texpr tvs
-  return $ foldr TArr retty argtys
+  return $ TArr retty argtys
 
 tsum :: [TVar] -> Parser Type
 tsum tvs = do
@@ -134,4 +134,8 @@ scheme = do
   let tvs' = map TV tvs
   retty <- texpr tvs'
   argtys <- parens $ many $ texpr tvs'
-  return $ Forall tvs' (foldr TArr retty argtys)
+  return $ Forall tvs' 
+            (if null argtys
+              then retty
+              else TArr retty argtys)
+                        

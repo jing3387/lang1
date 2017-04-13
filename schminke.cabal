@@ -23,13 +23,7 @@ library
                      , Language.Schminke.Frontend.Env
                      , Language.Schminke.Frontend.Infer
                      , Language.Schminke.Frontend.Pretty
-                     , Language.Schminke.Backend
-                     , Language.Schminke.Backend.Core
-                     , Language.Schminke.Backend.Convert
-                     , Language.Schminke.Backend.Normalize
-                     , Language.Schminke.Backend.Parser
   other-modules:       Language.Schminke.Frontend.Lexer
-                     , Language.Schminke.Backend.Lexer
   build-depends:       base >= 4.7 && < 5
                      , mtl
                      , text
@@ -59,8 +53,6 @@ test-suite schminke-test
   main-is:             Spec.hs
   other-modules:       Language.Schminke.Frontend.ParserSpec
                      , Language.Schminke.Frontend.InferSpec
-                     , Language.Schminke.Backend.ConvertSpec
-                     , Language.Schminke.Backend.NormalizeSpec
   build-depends:       base
                      , schminke
                      , containers

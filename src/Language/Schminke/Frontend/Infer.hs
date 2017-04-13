@@ -117,9 +117,10 @@ constraintsExpr env ex =
 closeOver :: Type -> Scheme
 closeOver = normalize . generalize Env.empty
 
-inEnv :: (Name, Scheme) -> Infer a -> Infer a
-inEnv (x, sc) m = do
-  let scope e = (remove e x) `extend` (x, sc)
+inEnv :: [(Name, Scheme)] -> Infer a -> Infer a
+inEnv xs m = do
+  env <- ask
+  let scope e = foldr (\(x, sc) env' -> (remove env' x) `extend` (x, sc)) env xs
   local scope m
 
 lookupEnv :: Name -> Infer Type
@@ -158,36 +159,49 @@ infer expr =
     Var x -> do
       t <- lookupEnv x
       return (t, [])
-    App e1 e2 -> do
-      (t1, c1) <- infer e1
-      (t2, c2) <- infer e2
+    App f es -> do
+      t1 <- lookupEnv f
+      is <- mapM infer es
+      let (ts, cs) = unzip is
       tv <- fresh
-      return (tv, c1 ++ c2 ++ [(t1, t2 `TArr` tv)])
-    Let x e1 e2 -> do
+      let t2 = TArr tv ts
+      return (tv, concat cs ++ [(t1, t2)])
+    Let bs e2s -> do
       env <- ask
-      (t1, c1) <- infer e1
-      case runSolve c1 of
-        Left err -> throwError err
-        Right sub -> do
-          let sc = generalize (apply sub env) (apply sub t1)
-          (t2, c2) <- inEnv (x, sc) $ local (apply sub) (infer e2)
-          return (t2, c1 ++ c2)
+      let (ns, e1s) = unzip bs
+      i1s <- mapM infer e1s
+      let (t1s, c1s) = unzip i1s
+      let sols = map runSolve c1s
+      let errs = lefts sols
+      when (not (null errs)) $
+        -- TODO: throw multiple errors
+        throwError $ head errs
+      let subs = rights sols
+      let scs = map (\(sub, t1) -> generalize (apply sub env) (apply sub t1)) (zip subs t1s) 
+      let env' = zip ns scs
+      i2s <- forM (zip subs e2s) (\(sub, e2) -> inEnv env' $ local (apply sub) (infer e2))
+      let (t2s, c2s) = unzip i2s
+      return (last t2s, concat c1s ++ concat c2s)
     If cond tr fl -> do
       (t1, c1) <- infer cond
       (t2, c2) <- infer tr
       (t3, c3) <- infer fl
-      return
-        (t2, c1 ++ c2 ++ c3 ++ [(t1, (i 1)), (t2, t3)])
+      return (t2, c1 ++ c2 ++ c3 ++ [(t1, (i 1)), (t2, t3)])
 
-inferTop :: Env -> [Top] -> Either [TypeError] Env
+inferTop :: Env -> [Top] -> Either TypeError Env
 inferTop env [] = Right env
-inferTop env ((Def name args body):xs) =
-  let infers = map (inferExpr env) body in
-  let ty = last $ rights infers in
+inferTop env ((Def name args body):rest) =
+  let ty@(Forall tvs (TArr _ argtys)) =
+        case Env.lookup name env of
+          Nothing -> error $ "no declaration: " ++ name
+          Just dec -> dec in
+  let xs = zip args (map (Forall tvs) argtys) in
+  let env' = env `extends` xs in
+  let infers = map (inferExpr env') body in
   let errs = lefts infers in
   if not (null errs)
-    then Left errs
-    else inferTop (extend env (name, ty)) xs
+    then Left $ head errs
+    else inferTop (extend env (name, ty)) rest
 inferTop env ((Dec x ty):xs) = inferTop (env `extend` (x, ty)) xs
 
 normalize :: Scheme -> Scheme
@@ -195,11 +209,11 @@ normalize (Forall _ body) = Forall (map snd ord) (normtype body)
   where
     ord = zip (nub $ fv body) (map TV letters)
     fv (TVar a) = [a]
-    fv (TArr a b) = fv a ++ fv b
+    fv (TArr a b) = fv a ++ concatMap fv b
     fv (TSum a b) = fv a ++ fv b
     fv (TPro a b) = fv a ++ fv b
     fv (TCon _) = []
-    normtype (TArr a b) = TArr (normtype a) (normtype b)
+    normtype (TArr a b) = TArr (normtype a) (map normtype b)
     normtype (TSum a b) = sum (normtype a) (normtype b)
     normtype (TPro a b) = TPro (normtype a) (normtype b)
     normtype (TCon a) = TCon a
@@ -233,7 +247,7 @@ unifies t1 t2
   | t1 == t2 = return emptySubst
 unifies (TVar v) t = v `bind` t
 unifies t (TVar v) = v `bind` t
-unifies (TArr t1 t2) (TArr t3 t4) = unifyMany [t1, t2] [t3, t4]
+unifies (TArr t1 t2) (TArr t3 t4) = unifyMany (t1 : t2) (t3 : t4)
 unifies (TSum t1 t2) (TSum t3 t4) = unifyMany [t1, t2] [t3, t4]
 unifies (TPro t1 t2) (TPro t3 t4) = unifyMany [t1, t2] [t3, t4]
 unifies t1 t2 = throwError $ UnificationFail t1 t2

@@ -27,8 +27,10 @@ library
                      , Language.Schminke.Backend.Core
                      , Language.Schminke.Backend.Convert
                      , Language.Schminke.Backend.Normalize
+                     , Language.Schminke.Backend.Parser
   other-modules:       Language.Schminke.Frontend.Lexer
                      , Language.Schminke.Backend.Reduce
+                     , Language.Schminke.Backend.Lexer
   build-depends:       base >= 4.7 && < 5
                      , mtl
                      , text

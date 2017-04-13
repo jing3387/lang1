@@ -26,8 +26,6 @@ spec = do
   describe "debruijn" $ do
     it "should convert an integer" $
       debruijn [] (Syntax.Lit (Syntax.Int 0)) `shouldBe` Core.Lit (Core.Int 0)
-    it "should convert a naked variable into a primitive operation" $
-      debruijn [] (Syntax.Var "x") `shouldBe` Core.Pop "x"
     it "should convert the identity function" $
       debruijn [] (Syntax.Lam "x" (Syntax.Var "x")) `shouldBe`
       (Core.Lam (Core.Var 0))
@@ -35,7 +33,8 @@ spec = do
       debruijn [] (Syntax.Lam "x" (Syntax.Lam "y" (Syntax.Var "x"))) `shouldBe`
       (Core.Lam (Core.Lam (Core.Var 1)))
     it "should convert the composition function" $
-      debruijn []
+      debruijn
+        []
         (Syntax.Lam
            "f"
            (Syntax.Lam
@@ -51,17 +50,22 @@ spec = do
                (Core.App (Core.Var 2) (Core.App (Core.Var 1) (Core.Var 0))))))
     it "should convert a let expression with one binding" $
       debruijn [] (Syntax.Let "x" (Syntax.Lit (Syntax.Int 1)) (Syntax.Var "x")) `shouldBe`
-      Core.Let (Core.Lit (Core.Int 1)) (Core.Var 0)
+      Core.Let "x" (Core.Lit (Core.Int 1)) (Core.Del "x")
     it
       "should convert a let expression where a later binding references an earlier binding" $
-      debruijn []
+      debruijn
+        []
         (Syntax.Let
            "x"
            (Syntax.Lit (Syntax.Int 1))
            (Syntax.Let "y" (Syntax.Var "x") (Syntax.Var "x"))) `shouldBe`
-      Core.Let (Core.Lit (Core.Int 1)) (Core.Let (Core.Var 1) (Core.Var 1))
+      Core.Let
+        "x"
+        (Core.Lit (Core.Int 1))
+        (Core.Let "y" (Core.Del "x") (Core.Del "x"))
     it "should convert an if expression" $
-      debruijn []
+      debruijn
+        []
         (Syntax.If
            (Syntax.App
               (Syntax.App (Syntax.Var "eq") (Syntax.Lit (Syntax.Int 0)))
@@ -69,11 +73,11 @@ spec = do
            (Syntax.Lit (Syntax.Int 0))
            (Syntax.Lit (Syntax.Int 1))) `shouldBe`
       (Core.If
-          (Core.App
-              (Core.App (Core.Pop "eq") (Core.Lit (Core.Int 0)))
-              (Core.Lit (Core.Int 0)))
-          (Core.Lit (Core.Int 0))
-          (Core.Lit (Core.Int 1)))
+         (Core.App
+            (Core.App (Core.Pop "eq") (Core.Lit (Core.Int 0)))
+            (Core.Lit (Core.Int 0)))
+         (Core.Lit (Core.Int 0))
+         (Core.Lit (Core.Int 1)))
   describe "convert" $ do
     it "converts the factorial function" $
       convert
@@ -83,17 +87,17 @@ spec = do
         [ Core.Def
             "f"
             (Core.Lam
-                (Core.If
-                    (Core.App
-                      (Core.App (Core.Pop "eq") (Core.Var 0))
-                      (Core.Lit (Core.Int 0)))
-                    (Core.Lit (Core.Int 1))
-                    (Core.App
-                      (Core.App (Core.Pop "mul") (Core.Var 0))
-                      (Core.App
-                          (Core.Del "f")
-                          (Core.App
-                            (Core.App (Core.Pop "sub") (Core.Var 0))
-                            (Core.Lit (Core.Int 1)))))))
+               (Core.If
+                  (Core.App
+                     (Core.App (Core.Pop "eq") (Core.Var 0))
+                     (Core.Lit (Core.Int 0)))
+                  (Core.Lit (Core.Int 1))
+                  (Core.App
+                     (Core.App (Core.Pop "mul") (Core.Var 0))
+                     (Core.App
+                        (Core.Del "f")
+                        (Core.App
+                           (Core.App (Core.Pop "sub") (Core.Var 0))
+                           (Core.Lit (Core.Int 1)))))))
         ]
         Nothing

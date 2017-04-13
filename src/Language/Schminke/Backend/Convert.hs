@@ -35,10 +35,10 @@ convertTop defs ((Syntax.Def x body):rest) =
 convertTop defs (_:rest) = convertTop defs rest
 
 debruijn :: [Type.Name] -> Syntax.Expr -> Core.Expr
-debruijn defs e = debruijn' [] e
+debruijn defs e = debruijn' defs [] e
   where
-    debruijn' :: Ctx -> Syntax.Expr -> Core.Expr
-    debruijn' ctx expr =
+    debruijn' :: [Type.Name] -> Ctx -> Syntax.Expr -> Core.Expr
+    debruijn' defs ctx expr =
       case expr of
         Syntax.Lit (Syntax.Int n) -> Core.Lit (Core.Int n)
         Syntax.Var x -> x'
@@ -47,15 +47,22 @@ debruijn defs e = debruijn' [] e
                     Nothing ->
                       if x `elem` defs
                         then Del x
-                        else Pop x
+                        else if x `elem` Core.prims
+                               then Pop x
+                               else error $ "unbound variable: " ++ show x
                     Just n' -> (Core.Var (fromIntegral n'))
-        Syntax.Lam x body -> Core.Lam (debruijn' ctx' body)
+        Syntax.Lam x body -> Core.Lam (debruijn' defs ctx' body)
           where ctx' = (x, 0) : incr ctx
-        Syntax.Let x e1 e2 -> Core.Let (debruijn' ctx' e1) (debruijn' ctx' e2)
-          where ctx' = (x, 0) : incr ctx
+        Syntax.Let x e1 e2 ->
+          Core.Let x (debruijn' defs' ctx e1) (debruijn' defs' ctx e2)
+          where defs' = x : defs
         Syntax.If cond tr fl ->
-          Core.If (debruijn' ctx cond) (debruijn' ctx tr) (debruijn' ctx fl)
-        Syntax.App f arg -> Core.App (debruijn' ctx f) (debruijn' ctx arg)
+          Core.If
+            (debruijn' defs ctx cond)
+            (debruijn' defs ctx tr)
+            (debruijn' defs ctx fl)
+        Syntax.App f arg ->
+          Core.App (debruijn' defs ctx f) (debruijn' defs ctx arg)
 
 incr :: Ctx -> Ctx
 incr ctx = zip names indices'

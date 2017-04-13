@@ -23,7 +23,12 @@ instance Pretty Expr where
   ppr p (Lit l) = ppr p l
   ppr p (Var n) = text "λ" <> integer (fromIntegral n)
   ppr p (Del d) = ppr p d
+  ppr p (Pop prim) = ppr p prim
   ppr p (Lam body) = parens $ text "lambda" $$ nest 1 (ppr p body)
+  ppr p (Let x e1 e2) =
+    parens $ text "let" <+> parens (ppr p x <+> ppr p e1) $$ nest 1 (ppr p e2)
+  ppr p (If cond tr fl) =
+    parens $ text "if" <+> ppr p cond $$ nest 3 (vcat [ppr p tr, ppr p fl])
   ppr p (App f arg) = parens $ ppr p f <+> ppr p arg
 
 instance Pretty Top where

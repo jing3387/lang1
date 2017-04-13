@@ -1,4 +1,4 @@
-module Language.Schminke.Frontend.Lexer where
+module Language.Schminke.Backend.Lexer where
 
 import Control.Monad (void)
 import Text.Megaparsec
@@ -27,7 +27,7 @@ integer :: Parser Integer
 integer = lexeme L.integer
 
 identStart :: Parser Char
-identStart = letterChar <|> symbolChar
+identStart = alphaNumChar <|> symbolChar
 
 identLetter :: Parser Char
 identLetter = alphaNumChar <|> symbolChar
@@ -40,19 +40,7 @@ reserved w =
     notFollowedBy identLetter <?> ("end of" ++ show w)
 
 reservedWords :: [String]
-reservedWords = ["declare", "define", "lambda", "if", "let"]
-
-reservedTypes :: [String]
-reservedTypes = ["forall", "Int", "Bool"] ++ typeOps
-
-tvId :: Parser String
-tvId = (lexeme . try) (p >>= check)
-  where
-    p = some lowerChar
-    check x =
-      if x `elem` reservedTypes
-        then fail $ show x ++ " cannot be a type variable"
-        else return x
+reservedWords = ["int", "var", "del", "pop", "define", "lambda", "if", "let"]
 
 identifier :: Parser String
 identifier = (lexeme . try) ((p <?> "identifier") >>= check)

@@ -8,7 +8,8 @@ data Expr
   | Del Name
   | Pop Name
   | Lam Expr
-  | Let Expr
+  | Let Name
+        Expr
         Expr
   | If Expr
        Expr

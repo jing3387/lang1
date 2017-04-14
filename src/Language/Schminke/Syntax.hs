@@ -18,8 +18,7 @@ data Top
   | Def Name [Name] [Expr]
   deriving (Show, Eq, Ord)
 
-data Program = Program [Top] (Maybe Expr)
-  deriving (Show, Eq, Ord)
+type Program = [Top]
 
 definitions :: [Top] -> [Top]
 definitions [] = []

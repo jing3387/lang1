@@ -19,7 +19,7 @@ import qualified LLVM.AST as AST
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.Attribute as A
 import qualified LLVM.AST.CallingConvention as CC
-import qualified LLVM.AST.FloatingPointPredicate as FP
+import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.Type as T
 
 newtype LLVM a = LLVM { unLLVM :: State AST.Module a }
@@ -45,8 +45,8 @@ define retty label argtys body = addDefn $
   , basicBlocks = body
   }
 
-external ::  Type -> String -> [(Type, Name)] -> LLVM ()
-external retty label argtys = addDefn $
+declare ::  Type -> String -> [(Type, Name)] -> LLVM ()
+declare retty label argtys = addDefn $
   GlobalDefinition $ functionDefaults {
     name        = Name label
   , parameters  = ([Parameter ty nm [] | (ty, nm) <- argtys], False)
@@ -188,19 +188,25 @@ externf :: Name -> Operand
 externf = ConstantOperand . C.GlobalReference T.void
 
 add :: Operand -> Operand -> Codegen Operand
-add a b = instr $ FAdd NoFastMathFlags a b []
+add a b = instr $ Add False False a b []
 
 sub :: Operand -> Operand -> Codegen Operand
-sub a b = instr $ FSub NoFastMathFlags a b []
+sub a b = instr $ Sub False False a b []
 
 mul :: Operand -> Operand -> Codegen Operand
-mul a b = instr $ FMul NoFastMathFlags a b []
+mul a b = instr $ Mul False False a b []
 
 sdiv :: Operand -> Operand -> Codegen Operand
-sdiv a b = instr $ FDiv NoFastMathFlags a b []
+sdiv a b = instr $ SDiv False a b []
 
-icmp :: FP.FloatingPointPredicate -> Operand -> Operand -> Codegen Operand
-icmp cond a b = instr $ FCmp cond a b []
+srem :: Operand -> Operand -> Codegen Operand
+srem a b = instr $ SRem a b []
+
+icmp :: IP.IntegerPredicate -> Operand -> Operand -> Codegen Operand
+icmp cond a b = instr $ ICmp cond a b []
+
+eq :: Operand -> Operand -> Codegen Operand
+eq a b = icmp IP.EQ a b
 
 cons :: C.Constant -> Operand
 cons = ConstantOperand

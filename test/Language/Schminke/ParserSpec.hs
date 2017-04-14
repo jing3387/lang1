@@ -64,69 +64,59 @@ spec = do
   describe "program" $ do
     it "should parse a declaration of an integer type" $
       parse program "" (L.pack "(declare x () i64 ())") `shouldParse`
-      Program [Dec "x" (Forall [] (TCon "i64"))] Nothing
+      [Dec "x" (Forall [] (TCon "i64"))]
     it "should parse a declaration of the identity function" $
       parse program "" (L.pack "(declare id (a) a (a))") `shouldParse`
-      Program
-        [Dec "id" (Forall [TV "a"] (TArr (TVar (TV "a")) [(TVar (TV "a"))]))]
-        Nothing
+      [Dec "id" (Forall [TV "a"] (TArr (TVar (TV "a")) [(TVar (TV "a"))]))]
     it "should parse a union type declaration" $
       parse
         program
         ""
         (L.pack "(declare foo (a b) (union a b) (i1 i2))") `shouldParse`
-      Program
-        [ Dec
-            "foo"
-            (Forall
-               [TV "a", TV "b"]
-               (TArr
-                  (TSum (TVar (TV "a")) (TVar (TV "b")))
-                  [(TCon "i1"), (TCon "i2")]))
-        ]
-        Nothing
+      [ Dec
+          "foo"
+          (Forall
+              [TV "a", TV "b"]
+              (TArr
+                (TSum (TVar (TV "a")) (TVar (TV "b")))
+                [(TCon "i1"), (TCon "i2")]))
+      ]
     it "should parse a struct type declaration" $
       parse
         program
         ""
         (L.pack "(declare foo (a b) i1 ((struct a b)))") `shouldParse`
-      Program
-        [ Dec
-            "foo"
-            (Forall
-              [TV "a", TV "b"]
-              (TArr
-                (TCon "i1")
-                [(TPro (TVar (TV "a")) (TVar (TV "b")))]))
-        ]
-        Nothing
+      [ Dec
+          "foo"
+          (Forall
+            [TV "a", TV "b"]
+            (TArr
+              (TCon "i1")
+              [(TPro (TVar (TV "a")) (TVar (TV "b")))]))
+      ]
     it "should parse a function pointer declaration" $
       parse
         program
         ""
         (L.pack "(declare foo (a b) (* (i1 ((struct a b)))) ())") `shouldParse`
-      Program
-        [ Dec
-            "foo"
-            (Forall
-              [TV "a", TV "b"]
-              (TRef (TArr (TCon "i1") [(TPro (TVar (TV "a")) (TVar (TV "b")))])))
-        ]
-        Nothing
+      [ Dec
+          "foo"
+          (Forall
+            [TV "a", TV "b"]
+            (TRef (TArr (TCon "i1") [(TPro (TVar (TV "a")) (TVar (TV "b")))])))
+      ]
     it "should parse the factorial program" $
       parse
         program
         ""
         (L.pack
-           "(declare f () i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1))))) (f 5)") `shouldParse`
-      Program
-        [ Dec "f" (Forall [] (TArr (TCon "i64") [(TCon "i64")]))
-        , Def
-            "f"
-            ["n"]
-            [(If
-              (App "eq" [(Var "n"), (Lit (Int 0))])
-              (Lit (Int 1))
-              (App "mul" [Var "n", (App "f" [(App "sub" [(Var "n"), (Lit (Int 1))])])]))]
-        ]
-        (Just (App "f" [(Lit (Int 5))]))
+           "(declare f () i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))") `shouldParse`
+      [ Dec "f" (Forall [] (TArr (TCon "i64") [(TCon "i64")]))
+      , Def
+          "f"
+          ["n"]
+          [(If
+            (App "eq" [(Var "n"), (Lit (Int 0))])
+            (Lit (Int 1))
+            (App "mul" [Var "n", (App "f" [(App "sub" [(Var "n"), (Lit (Int 1))])])]))]
+      ]

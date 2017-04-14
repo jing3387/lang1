@@ -4,7 +4,6 @@
 module Language.Schminke.Pretty
   ( ppexpr
   , pptop
-  , ppprog
   , ppconstraint
   , ppconstraints
   , ppenv
@@ -65,10 +64,6 @@ instance Pretty Top where
     $$ nest 1 (vcat $ map (ppr p) body)
   ppr p (Dec x ty) = parens $ text "declare" <+> ppr p x <+> ppr p ty
 
-instance Pretty Program where
-  ppr p (Program defs expr) =
-    vcat (map (ppr p) defs) $$ (maybe Text.PrettyPrint.empty (ppr p) expr)
-
 instance Pretty Constraint where
   ppr p (a, b) = (ppr p a) <+> text " ~ " <+> (ppr p b)
 
@@ -98,9 +93,6 @@ ppexpr = render . ppr 0
 
 pptop :: Top -> String
 pptop = render . ppr 0
-
-ppprog :: Program -> String
-ppprog = render . ppr 0
 
 ppscheme :: Scheme -> String
 ppscheme = render . ppr 0

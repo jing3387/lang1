@@ -72,19 +72,13 @@ define = do
   return $ Def name args body
 
 top :: Parser Top
-top = try $ parens (declare <|> define)
-
-modl :: Parser Program
-modl = do
-  tops <- many top
-  e <- optional expr
-  return $ Program tops e
+top = parens (declare <|> define)
 
 expression :: Parser Expr
 expression = between sc eof expr
 
 program :: Parser Program
-program = between sc eof modl
+program = between sc eof (many top)
 
 tcon :: Parser Type
 tcon = do

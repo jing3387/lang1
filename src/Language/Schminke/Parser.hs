@@ -1,4 +1,4 @@
-module Language.Schminke.Frontend.Parser
+module Language.Schminke.Parser
   ( expression
   , program
   , top
@@ -12,9 +12,9 @@ import Text.Megaparsec.Expr
 import Text.Megaparsec.Text.Lazy
 import Prelude hiding (sum)
 
-import Language.Schminke.Frontend.Lexer
-import Language.Schminke.Frontend.Syntax as Syntax
-import Language.Schminke.Frontend.Type
+import Language.Schminke.Lexer
+import Language.Schminke.Syntax as Syntax
+import Language.Schminke.Type
 
 int :: Parser Expr
 int = do
@@ -134,8 +134,8 @@ scheme = do
   let tvs' = map TV tvs
   retty <- texpr tvs'
   argtys <- parens $ many $ texpr tvs'
-  return $ Forall tvs' 
+  return $ Forall tvs'
             (if null argtys
               then retty
               else TArr retty argtys)
-                        
+

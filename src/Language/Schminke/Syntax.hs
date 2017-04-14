@@ -1,6 +1,6 @@
-module Language.Schminke.Frontend.Syntax where
+module Language.Schminke.Syntax where
 
-import Language.Schminke.Frontend.Type
+import Language.Schminke.Type
 
 data Expr
   = Lit Literal

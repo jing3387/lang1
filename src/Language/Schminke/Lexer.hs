@@ -1,12 +1,12 @@
-module Language.Schminke.Frontend.Lexer where
+module Language.Schminke.Lexer where
 
 import Control.Monad (void)
 import Text.Megaparsec
 import qualified Text.Megaparsec.Lexer as L
 import Text.Megaparsec.Text.Lazy
 
-import Language.Schminke.Frontend.Syntax
-import Language.Schminke.Frontend.Type
+import Language.Schminke.Syntax
+import Language.Schminke.Type
 
 sc :: Parser ()
 sc = L.space (void spaceChar) lineCmnt blockCmnt

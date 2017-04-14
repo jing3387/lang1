@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
-module Language.Schminke.Frontend.Pretty
+module Language.Schminke.Pretty
   ( ppexpr
   , pptop
   , ppprog
@@ -14,10 +14,10 @@ module Language.Schminke.Frontend.Pretty
   , pptype
   ) where
 
-import Language.Schminke.Frontend.Env
-import Language.Schminke.Frontend.Infer
-import Language.Schminke.Frontend.Syntax
-import Language.Schminke.Frontend.Type
+import Language.Schminke.Env
+import Language.Schminke.Infer
+import Language.Schminke.Syntax
+import Language.Schminke.Type
 
 import qualified Data.Map as Map
 import Text.PrettyPrint
@@ -55,12 +55,12 @@ instance Pretty Expr where
   ppr p (Var x) = ppr p x
   ppr p (Lit l) = ppr p l
   ppr p (Let bs body) =
-    parens $ text "let" <+> parens (vcat $ map (\(x, e) -> parens $ ppr p x <+> ppr p e) bs) 
+    parens $ text "let" <+> parens (vcat $ map (\(x, e) -> parens $ ppr p x <+> ppr p e) bs)
     $$ nest 1 (vcat $ map (ppr p) body)
   ppr p (App f args) = parens $ ppr p f <+> hsep (map (ppr p) args)
 
 instance Pretty Top where
-  ppr p (Def x args body) = 
+  ppr p (Def x args body) =
     parens $ text "define" <+> ppr p x <+> parens (hsep $ map (ppr p) args)
     $$ nest 1 (vcat $ map (ppr p) body)
   ppr p (Dec x ty) = parens $ text "declare" <+> ppr p x <+> ppr p ty

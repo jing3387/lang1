@@ -17,8 +17,8 @@ import System.Exit
 import Text.Megaparsec
 
 import Language.Schminke
-import Language.Schminke.Frontend.Env as Env
-import Language.Schminke.Frontend.Syntax as Syntax
+import Language.Schminke.Env as Env
+import Language.Schminke.Syntax as Syntax
 
 data IState = IState
   { tyctx :: Env.Env

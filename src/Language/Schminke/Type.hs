@@ -1,4 +1,4 @@
-module Language.Schminke.Frontend.Type where
+module Language.Schminke.Type where
 
 import Data.List
 

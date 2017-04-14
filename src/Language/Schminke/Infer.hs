@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Language.Schminke.Frontend.Infer
+module Language.Schminke.Infer
   ( Constraint
   , TypeError(..)
   , Subst(..)
@@ -20,9 +20,9 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Prelude hiding (sum)
 
-import Language.Schminke.Frontend.Env as Env
-import Language.Schminke.Frontend.Syntax
-import Language.Schminke.Frontend.Type
+import Language.Schminke.Env as Env
+import Language.Schminke.Syntax
+import Language.Schminke.Type
 
 type Infer a = (ReaderT Env (StateT InferState (Except TypeError)) a)
 
@@ -177,7 +177,7 @@ infer expr =
         -- TODO: throw multiple errors
         throwError $ head errs
       let subs = rights sols
-      let scs = map (\(sub, t1) -> generalize (apply sub env) (apply sub t1)) (zip subs t1s) 
+      let scs = map (\(sub, t1) -> generalize (apply sub env) (apply sub t1)) (zip subs t1s)
       let env' = zip ns scs
       i2s <- forM (zip subs e2s) (\(sub, e2) -> inEnv env' $ local (apply sub) (infer e2))
       let (t2s, c2s) = unzip i2s

@@ -1,4 +1,4 @@
-module Language.Schminke.Frontend.ParserSpec
+module Language.Schminke.ParserSpec
   ( main
   , spec
   ) where
@@ -8,9 +8,9 @@ import Test.Hspec
 import Test.Hspec.Megaparsec
 import Text.Megaparsec
 
-import Language.Schminke.Frontend.Parser
-import Language.Schminke.Frontend.Syntax
-import Language.Schminke.Frontend.Type
+import Language.Schminke.Parser
+import Language.Schminke.Syntax
+import Language.Schminke.Type
 
 main :: IO ()
 main = hspec spec
@@ -56,7 +56,7 @@ spec = do
       it "should not parse an empty list" $
         parse expression "" `shouldFailOn` (L.pack "()")
       it "should not parse a let expression with no bindings" $
-        parse expression "" `shouldFailOn` (L.pack "(let () x)") 
+        parse expression "" `shouldFailOn` (L.pack "(let () x)")
       it "should not parse an empty let body" $
         parse expression "" `shouldFailOn` (L.pack "(let ((x 1)))")
       it "should not parse an empty let expression" $
@@ -122,7 +122,7 @@ spec = do
       Program
         [ Dec "f" (Forall [] (TArr (TCon "i64") [(TCon "i64")]))
         , Def
-            "f" 
+            "f"
             ["n"]
             [(If
               (App "eq" [(Var "n"), (Lit (Int 0))])

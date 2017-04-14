@@ -16,14 +16,14 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Language.Schminke
-                     , Language.Schminke.Frontend
-                     , Language.Schminke.Frontend.Syntax
-                     , Language.Schminke.Frontend.Parser
-                     , Language.Schminke.Frontend.Type
-                     , Language.Schminke.Frontend.Env
-                     , Language.Schminke.Frontend.Infer
-                     , Language.Schminke.Frontend.Pretty
-  other-modules:       Language.Schminke.Frontend.Lexer
+                     , Language.Schminke.Syntax
+                     , Language.Schminke.Parser
+                     , Language.Schminke.Type
+                     , Language.Schminke.Env
+                     , Language.Schminke.Infer
+                     , Language.Schminke.Pretty
+                     , Language.Schminke.Codegen
+  other-modules:       Language.Schminke.Lexer
   build-depends:       base >= 4.7 && < 5
                      , mtl
                      , text
@@ -51,8 +51,8 @@ test-suite schminke-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
-  other-modules:       Language.Schminke.Frontend.ParserSpec
-                     , Language.Schminke.Frontend.InferSpec
+  other-modules:       Language.Schminke.ParserSpec
+                     , Language.Schminke.InferSpec
   build-depends:       base
                      , schminke
                      , containers

@@ -1,4 +1,4 @@
-module Language.Schminke.Frontend.InferSpec
+module Language.Schminke.InferSpec
   ( main
   , spec
   ) where
@@ -10,12 +10,12 @@ import qualified Data.Text.Lazy as L
 import Test.Hspec
 import Text.Megaparsec
 
-import qualified Language.Schminke.Frontend.Env as Env
-import Language.Schminke.Frontend.Infer
-import Language.Schminke.Frontend.Parser
-import Language.Schminke.Frontend.Pretty
-import Language.Schminke.Frontend.Syntax
-import Language.Schminke.Frontend.Type
+import qualified Language.Schminke.Env as Env
+import Language.Schminke.Infer
+import Language.Schminke.Parser
+import Language.Schminke.Pretty
+import Language.Schminke.Syntax
+import Language.Schminke.Type
 
 main :: IO ()
 main = hspec spec

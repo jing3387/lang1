@@ -33,10 +33,10 @@ typeofProgram :: String -> Map.Map Name Scheme
 typeofProgram input =
   case parse program "" (L.pack input) of
     Left err -> error $ parseErrorPretty err
-    Right (Program tops x) ->
-      case inferTop Env.init tops of
+    Right prog ->
+      case inferTop Env.init prog of
         Left err -> error $ show err
-        Right (Env.TypeEnv {Env.types = t}) -> t
+        Right Env.TypeEnv {Env.types = t} -> t
 
 parseScheme :: String -> Scheme
 parseScheme input =
@@ -61,9 +61,9 @@ spec = do
         evaluate (typeof "y") `shouldThrow` anyErrorCall
       it "should not infer a type scheme when given an infinite type" $
         pendingWith "Have to figure out an example now that `lambda` is gone"
-  describe "inferTop" $ do
+  describe "inferTop" $
     it "should infer the type of the factorial function" $
-      (typeofProgram
-         "(declare f () i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))") Map.!
+      typeofProgram
+      "(declare f () i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))" Map.!
       "f" `shouldBe`
       parseScheme "() i64 (i64)"

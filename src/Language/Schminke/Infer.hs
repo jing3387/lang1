@@ -15,6 +15,7 @@ import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Either
+import Data.Maybe
 import Data.List (nub)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -26,7 +27,7 @@ import Language.Schminke.Type
 
 type Infer a = (ReaderT Env (StateT InferState (Except TypeError)) a)
 
-data InferState = InferState
+newtype InferState = InferState
   { count :: Int
   }
 
@@ -120,7 +121,7 @@ closeOver = normalize . generalize Env.empty
 inEnv :: [(Name, Scheme)] -> Infer a -> Infer a
 inEnv xs m = do
   env <- ask
-  let scope e = foldr (\(x, sc) env' -> (remove env' x) `extend` (x, sc)) env xs
+  let scope e = foldr (\(x, sc) env' -> remove env' x `extend` (x, sc)) env xs
   local scope m
 
 lookupEnv :: Name -> Infer Type
@@ -128,9 +129,7 @@ lookupEnv x = do
   (TypeEnv env) <- ask
   case Map.lookup x env of
     Nothing -> throwError $ UnboundVariable x
-    Just s -> do
-      t <- instantiate s
-      return t
+    Just s -> instantiate s
 
 letters :: [String]
 letters = [1 ..] >>= flip replicateM ['a' .. 'z']
@@ -173,36 +172,38 @@ infer expr =
       let (t1s, c1s) = unzip i1s
       let sols = map runSolve c1s
       let errs = lefts sols
-      when (not (null errs)) $
-        -- TODO: throw multiple errors
-        throwError $ head errs
+      unless (null errs) $ throwError $ head errs
       let subs = rights sols
-      let scs = map (\(sub, t1) -> generalize (apply sub env) (apply sub t1)) (zip subs t1s)
+      let scs =
+            map
+              (\(sub, t1) -> generalize (apply sub env) (apply sub t1))
+              (zip subs t1s)
       let env' = zip ns scs
-      i2s <- forM (zip subs e2s) (\(sub, e2) -> inEnv env' $ local (apply sub) (infer e2))
+      i2s <-
+        forM
+          (zip subs e2s)
+          (\(sub, e2) -> inEnv env' $ local (apply sub) (infer e2))
       let (t2s, c2s) = unzip i2s
       return (last t2s, concat c1s ++ concat c2s)
     If cond tr fl -> do
       (t1, c1) <- infer cond
       (t2, c2) <- infer tr
       (t3, c3) <- infer fl
-      return (t2, c1 ++ c2 ++ c3 ++ [(t1, (i 1)), (t2, t3)])
+      return (t2, c1 ++ c2 ++ c3 ++ [(t1, i 1), (t2, t3)])
 
 inferTop :: Env -> [Top] -> Either TypeError Env
 inferTop env [] = Right env
-inferTop env ((Def name args body):rest) =
+inferTop env (Def name args body:rest) =
   let ty@(Forall tvs (TArr _ argtys)) =
-        case Env.lookup name env of
-          Nothing -> error $ "no declaration: " ++ name
-          Just dec -> dec in
-  let xs = zip args (map (Forall tvs) argtys) in
-  let env' = env `extends` xs in
-  let infers = map (inferExpr env') body in
-  let errs = lefts infers in
-  if not (null errs)
-    then Left $ head errs
-    else inferTop (extend env (name, ty)) rest
-inferTop env ((Dec x ty):xs) = inferTop (env `extend` (x, ty)) xs
+        fromMaybe (error $ "no declaration: " ++ name) (Env.lookup name env)
+  in let xs = zip args (map (Forall tvs) argtys)
+     in let env' = env `extends` xs
+        in let infers = map (inferExpr env') body
+           in let errs = lefts infers
+              in if not (null errs)
+                   then Left $ head errs
+                   else inferTop (extend env (name, ty)) rest
+inferTop env (Dec x ty:xs) = inferTop (env `extend` (x, ty)) xs
 
 normalize :: Scheme -> Scheme
 normalize (Forall _ body) = Forall (map snd ord) (normtype body)

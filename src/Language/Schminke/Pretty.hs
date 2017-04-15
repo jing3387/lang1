@@ -29,13 +29,15 @@ class Pretty p where
   ppr :: Int -> p -> Doc
 
 instance Pretty Name where
-  ppr _ x = text x
+  ppr _ = text
 
 instance Pretty TVar where
   ppr _ (TV x) = text x
 
 instance Pretty Type where
-  ppr p (TArr a b) = hsep (map (\x -> parensIf (isArrow x) (ppr p x) <+> text "->") b) <+> ppr p a
+  ppr p (TArr a b) =
+    hsep (map (\x -> parensIf (isArrow x) (ppr p x) <+> text "->") b) <+>
+    ppr p a
     where
       isArrow TArr {} = True
       isArrow _ = False
@@ -45,7 +47,8 @@ instance Pretty Type where
 instance Pretty Scheme where
   ppr p (Forall [] t) = ppr p t
   ppr p (Forall ts t) =
-    text "∀" <+> hcat (punctuate space (map (ppr p) ts)) <> text "." <+> ppr p t
+    text "∀" <+>
+    hcat (punctuate space (map (ppr p) ts)) <> text "." <+> ppr p t
 
 instance Pretty Literal where
   ppr _ (Int i) = integer i
@@ -54,18 +57,22 @@ instance Pretty Expr where
   ppr p (Var x) = ppr p x
   ppr p (Lit l) = ppr p l
   ppr p (Let bs body) =
-    parens $ text "let" <+> parens (vcat $ map (\(x, e) -> parens $ ppr p x <+> ppr p e) bs)
-    $$ nest 1 (vcat $ map (ppr p) body)
+    parens $
+    text "let" <+>
+    parens (vcat $ map (\(x, e) -> parens $ ppr p x <+> ppr p e) bs) $$
+    nest 1 (vcat $ map (ppr p) body)
   ppr p (App f args) = parens $ ppr p f <+> hsep (map (ppr p) args)
 
 instance Pretty Top where
   ppr p (Def x args body) =
-    parens $ text "define" <+> ppr p x <+> parens (hsep $ map (ppr p) args)
-    $$ nest 1 (vcat $ map (ppr p) body)
+    parens $
+    text "define" <+>
+    ppr p x <+>
+    parens (hsep $ map (ppr p) args) $$ nest 1 (vcat $ map (ppr p) body)
   ppr p (Dec x ty) = parens $ text "declare" <+> ppr p x <+> ppr p ty
 
 instance Pretty Constraint where
-  ppr p (a, b) = (ppr p a) <+> text " ~ " <+> (ppr p b)
+  ppr p (a, b) = ppr p a <+> text " ~ " <+> ppr p b
 
 instance Pretty [Constraint] where
   ppr p cs = vcat (punctuate space (map (ppr p) cs))
@@ -87,6 +94,8 @@ instance Show TypeError where
       | (a, b) <- cs
       ]
   show (UnboundVariable a) = "not in scope: " ++ a
+  show (UnificationMismatch as bs) =
+    "unification mismatch: " ++ show as ++ " " ++  show bs
 
 ppexpr :: Expr -> String
 ppexpr = render . ppr 0

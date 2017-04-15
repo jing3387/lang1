@@ -26,21 +26,11 @@ come about that C will have an enjoyable time interfacing with Schminke.
 * `(<symbol> <expr>*)`: call a function with zero or more arguments
 
 ## Examples
-
-### The classic
-```scheme
-(declare fac () i64 (i64))
-(define fac (n)
-  (if (eq n 0)
-      1
-      (mul n (fac (sub n 1)))))
-
-(fac 5)
-```
+Examples can be found in `examples/`.
 
 ## Dependencies
 * [stack](http://haskellstack.org/)
-* [llvm](http://llvm.org/)
+* [llvm](http://llvm.org/), specifically version 4.0.
 * [bats](https://github.com/sstephenson/bats)
 
 ## Testing
@@ -52,7 +42,17 @@ $ stack test
 To test the resulting executable run:
 ```bash
 $ stack install
-$ bats bats/test.bats
+$ bats test.bats
 ```
 It is required that stack's installation location, defaulting to
 `~/.local/bin`, is on the path before running the BATS test suite.
+
+## Usage
+Schminke generates LLVM IR to `stdout` which can then be manipulated in
+arbitrary ways by the [LLVM tools](http://llvm.org/docs/CommandGuide/). An
+example would be piping the output of Schminke to the LLVM interpreter:
+
+```bash
+$ stack install
+$ sch <file> | lli-4.0
+```

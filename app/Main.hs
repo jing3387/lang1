@@ -10,7 +10,9 @@ import qualified Data.Text.Lazy.IO as LIO
 import LLVM.Analysis
 import LLVM.Context
 import LLVM.Module
+import System.Directory
 import System.Environment
+import System.FilePath
 import System.IO
 import Text.Megaparsec
 
@@ -24,7 +26,7 @@ liftError = runExceptT >=> either fail return
 process :: String -> IO ()
 process fname = do
   contents <- LIO.readFile fname
-  case parse program fname contents of
+  case parse program (takeBaseName fname) contents of
     Left err -> error $ parseErrorPretty err
     Right prog ->
       let defs = definitions prog
@@ -53,5 +55,7 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
-    [fname] -> void $ process fname
+    [fname] -> do
+      abs <- makeAbsolute fname
+      void $ process abs
     _ -> putStrLn "invalid arguments"

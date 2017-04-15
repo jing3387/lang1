@@ -24,7 +24,6 @@ library
                      , Language.Schminke.Pretty
                      , Language.Schminke.Codegen
                      , Language.Schminke.Emit
-                     , Language.Schminke.Eval
   other-modules:       Language.Schminke.Lexer
   build-depends:       base >= 4.7 && < 5
                      , mtl
@@ -36,7 +35,7 @@ library
                      , llvm-hs-pure
   default-language:    Haskell2010
 
-executable schminke-exe
+executable schminke
   hs-source-dirs:      app
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
@@ -48,6 +47,8 @@ executable schminke-exe
                      , repline
                      , megaparsec
                      , llvm-hs
+                     , filepath
+                     , directory
   default-language:    Haskell2010
 
 test-suite schminke-test
@@ -56,7 +57,6 @@ test-suite schminke-test
   main-is:             Spec.hs
   other-modules:       Language.Schminke.ParserSpec
                      , Language.Schminke.InferSpec
-                     , Language.Schminke.EvalSpec
   build-depends:       base
                      , schminke
                      , containers

@@ -29,6 +29,7 @@ typeOf t =
   case t of
     TVar _ -> error $ "type variable: " ++ show t
     TCon "i1" -> T.i1
+    TCon "i32" -> T.i32
     TCon "i64" -> T.i64
 
 codegenTop :: Env.Env -> S.Top -> LLVM ()
@@ -80,5 +81,5 @@ cgen (S.App fn args) = do
 
 codegen :: Env.Env -> AST.Module -> [S.Top] -> AST.Module
 codegen env mod fns = runLLVM mod modn
-    where
-      modn = mapM (codegenTop env) fns
+  where
+    modn = mapM (codegenTop env) fns

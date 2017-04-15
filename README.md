@@ -42,3 +42,17 @@ come about that C will have an enjoyable time interfacing with Schminke.
 * [stack](http://haskellstack.org/)
 * [llvm](http://llvm.org/)
 * [bats](https://github.com/sstephenson/bats)
+
+## Testing
+To test the assembler run:
+```bash
+$ stack test
+```
+
+To test the resulting executable run:
+```bash
+$ stack install
+$ bats bats/test.bats
+```
+It is required that stack's installation location, defaulting to
+`~/.local/bin`, is on the path before running the BATS test suite.

@@ -214,7 +214,11 @@ inferTop' (env, tops) (S.Def name args body:rest) =
           else let (_, es) = unzip $ rights infers
                in let tops' = C.Def (name, retty) (zip args argtys) es : tops
                   in inferTop' (env `extend` (name, ty), tops') rest
-inferTop' (env, tops) (S.Dec x ty:xs) = inferTop' (env `extend` (x, ty), tops) xs
+inferTop' (env, tops) (S.Dec x ty:xs) =
+  let names = map (\(S.Def name _ _) -> name) (definitions xs)
+  in if x `notElem` names
+       then inferTop' (env `extend` (x, ty), C.Dec x ty : tops) xs
+       else inferTop' (env `extend` (x, ty), tops) xs
 
 normalize :: Scheme -> Scheme
 normalize (Forall _ body) = Forall (map snd ord) (normtype body)

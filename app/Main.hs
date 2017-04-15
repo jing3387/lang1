@@ -34,22 +34,15 @@ process fname = do
          in let env = Env.init `extends` decs
             in case inferTop env defs of
                  Left err -> error $ show err
-                 Right _ ->
+                 Right (_, prog') ->
                    let names = map (\(Def name _ _) -> name) defs
-                   in let prog' =
-                            filter
-                              (\x ->
-                                 case x of
-                                   (Dec name _) -> name `notElem` names
-                                   _ -> True)
-                              prog
-                      in let mod = codegen env (emptyModule fname) prog'
-                         in withContext $ \context ->
-                                 liftError $
-                                 withModuleFromAST context mod $ \m -> do
-                                   liftError $ verify m
-                                   asm <- moduleLLVMAssembly m
-                                   putStrLn asm
+                   in let mod = codegen (emptyModule fname) prog'
+                      in withContext $ \context ->
+                           liftError $
+                           withModuleFromAST context mod $ \m -> do
+                             liftError $ verify m
+                             asm <- moduleLLVMAssembly m
+                             putStrLn asm
 
 main :: IO ()
 main = do

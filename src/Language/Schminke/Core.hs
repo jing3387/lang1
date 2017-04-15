@@ -18,10 +18,12 @@ newtype Literal =
   Int Integer
   deriving (Show, Eq, Ord)
 
-data Top =
-  Def (Name, Type)
-      [(Name, Type)]
-      [Expr]
+data Top
+  = Def (Name, Type)
+        [(Name, Type)]
+        [Expr]
+  | Dec Name
+        Scheme
   deriving (Show, Eq, Ord)
 
 type Program = [Top]

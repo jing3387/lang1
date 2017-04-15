@@ -18,8 +18,8 @@ import Data.Maybe
 import Data.Word
 
 import Language.Schminke.Codegen
+import Language.Schminke.Core
 import qualified Language.Schminke.Env as Env
-import qualified Language.Schminke.Syntax as S
 import Language.Schminke.Type
 
 false = cons $ C.Int 1 0
@@ -27,36 +27,43 @@ false = cons $ C.Int 1 0
 true = cons $ C.Int 1 1
 
 toSig :: [(Name, Type)] -> [(AST.Type, AST.Name)]
-toSig = map (\(x, ty) -> (typeOf ty, AST.Name x))
+toSig = map (\(x, ty) -> (toLLVM ty, AST.Name x))
 
-typeOf :: Type -> T.Type
-typeOf t =
+toLLVM :: Type -> T.Type
+toLLVM t =
   case t of
     TVar _ -> error $ "type variable: " ++ show t
     TCon "i1" -> T.i1
     TCon "i32" -> T.i32
     TCon "i64" -> T.i64
 
-codegenTop :: Env.Env -> S.Top -> LLVM ()
-codegenTop env (S.Def name args body) = define (typeOf retty) name fnargs bls
+typeOf :: Expr -> Type
+typeOf expr =
+  case expr of
+    Lit (Int _) -> i 64
+    Var (_, ty) -> ty
+    Let _ body -> last (map typeOf body)
+    -- Both branches have the same type, arbitrarily pick the first branch.
+    If _ tr _ -> typeOf tr
+    App (_, ty) _ -> ty
+
+codegenTop :: Top -> LLVM ()
+codegenTop (Def (name, retty) args body) =
+  define (toLLVM retty) name fnargs bls
   where
-    (Forall _ (TArr retty argtys)) =
-      fromMaybe
-        (error $ "no declaration for: " ++ name)
-        (name `Env.lookup` env)
-    fnargs = toSig (zip args argtys)
+    fnargs = toSig args
     bls =
       createBlocks $
       execCodegen $ do
         entry <- addBlock entryBlockName
         setBlock entry
-        forM_ (zip args argtys) $ \(a, t) -> do
-          var <- alloca (typeOf t)
+        forM_ args $ \(a, t) -> do
+          var <- alloca (toLLVM t)
           store var (local (AST.Name a))
           assign a var
         cbody <- mapM cgen body
         ret (last cbody)
-codegenTop _ (S.Dec name sch) = declare (typeOf retty) name fnargs
+codegenTop (Dec name sch) = declare (toLLVM retty) name fnargs
   where
     fnargs = toSig (zip (take (length argtys) letters) argtys)
     letters = [1 ..] >>= flip replicateM ['a' .. 'z']
@@ -72,16 +79,16 @@ binops =
     , ("eq", eq)
     ]
 
-cgen :: S.Expr -> Codegen AST.Operand
-cgen (S.Var x) = getvar x >>= load
-cgen (S.Lit (S.Int n)) = return $ cons $ C.Int 64 n
-cgen (S.App binop [a, b])
+cgen :: Expr -> Codegen AST.Operand
+cgen (Var (x, _)) = getvar x >>= load
+cgen (Lit (Int n)) = return $ cons $ C.Int 64 n
+cgen (App (binop, _) [a, b])
   | binop `Map.member` binops = do
     let f = binops Map.! binop
     ca <- cgen a
     cb <- cgen b
     f ca cb
-cgen (S.If cond tr fl) = do
+cgen (If cond tr fl) = do
   ifthen <- addBlock "if.then"
   ifelse <- addBlock "if.else"
   ifexit <- addBlock "if.exit"
@@ -97,12 +104,14 @@ cgen (S.If cond tr fl) = do
   br ifexit
   ifelse <- getBlock
   setBlock ifexit
-  phi T.i64 [(ctr, ifthen), (cfl, ifelse)]
-cgen (S.App fn args) = do
+  -- Both branches have the same type, arbitrarily choose the first branch.
+  let ty = typeOf tr
+  phi (toLLVM ty) [(ctr, ifthen), (cfl, ifelse)]
+cgen (App (fn, _) args) = do
   cargs <- mapM cgen args
   call (externf (AST.Name fn)) cargs
 
-codegen :: Env.Env -> AST.Module -> [S.Top] -> AST.Module
-codegen env mod fns = runLLVM mod modn
+codegen :: AST.Module -> [Top] -> AST.Module
+codegen mod fns = runLLVM mod modn
   where
-    modn = mapM (codegenTop env) fns
+    modn = mapM codegenTop fns

@@ -27,7 +27,7 @@ typeOf input =
     Right x ->
       case constraintsExpr Env.init x of
         Left err -> error $ show err
-        Right (_, _, _, Forall _ ty) -> ty
+        Right (_, _, _, Forall _ ty, _) -> ty
 
 typeOfProgram :: String -> Map.Map Name Scheme
 typeOfProgram input =
@@ -36,7 +36,7 @@ typeOfProgram input =
     Right prog ->
       case inferTop Env.init prog of
         Left err -> error $ show err
-        Right Env.TypeEnv {Env.types = t} -> t
+        Right (Env.TypeEnv {Env.types = t}, _) -> t
 
 parseType :: String -> Type
 parseType input =
@@ -66,10 +66,18 @@ spec = do
       it "should not infer a type scheme when a variable is unbound" $
         evaluate (typeOf "y") `shouldThrow` anyErrorCall
       it "should not infer a type scheme when given an infinite type" $
-        pendingWith "Have to figure out an example now that `lambda` is gone"
-  describe "inferTop" $
+        evaluate (typeOfProgram "(declare f (a) (a a)) (define f (a) (a a))") `shouldThrow`
+        anyErrorCall
+      it "should not infer a type scheme when there's an argument mismatch" $
+        evaluate (typeOf "(mul 1)") `shouldThrow` anyErrorCall
+  describe "inferTop" $ do
     it "should infer the type of the factorial function" $
-    typeOfProgram
-      "(declare f () i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))" Map.!
-    "f" `shouldBe`
-    parseScheme "() i64 (i64)"
+      typeOfProgram
+        "(declare f () i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))" Map.!
+      "f" `shouldBe`
+      parseScheme "() i64 (i64)"
+    it "should infer the type of the the main function" $
+      typeOfProgram
+        "(declare f () i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1))))) (declare main () i64 ()) (define main () (f 5))" Map.!
+      "main" `shouldBe`
+      parseScheme "() i64 ()"

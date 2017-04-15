@@ -15,14 +15,15 @@ import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Either
-import Data.Maybe
 import Data.List (nub)
 import qualified Data.Map as Map
+import Data.Maybe
 import qualified Data.Set as Set
 import Prelude hiding (sum)
 
+import Language.Schminke.Core as C
 import Language.Schminke.Env as Env
-import Language.Schminke.Syntax
+import Language.Schminke.Syntax as S
 import Language.Schminke.Type
 
 type Infer a = (ReaderT Env (StateT InferState (Except TypeError)) a)
@@ -89,30 +90,33 @@ data TypeError
   | UnificationMismatch [Type]
                         [Type]
 
-runInfer :: Env
-         -> Infer (Type, [Constraint])
-         -> Either TypeError (Type, [Constraint])
+runInfer
+  :: Env
+  -> Infer (Type, [Constraint], C.Expr)
+  -> Either TypeError (Type, [Constraint], C.Expr)
 runInfer env m = runExcept $ evalStateT (runReaderT m env) initInfer
 
-inferExpr :: Env -> Expr -> Either TypeError Scheme
+inferExpr :: Env -> S.Expr -> Either TypeError (Scheme, C.Expr)
 inferExpr env ex =
   case runInfer env (infer ex) of
     Left err -> Left err
-    Right (ty, cs) ->
+    Right (ty, cs, ex') ->
       case runSolve cs of
         Left err -> Left err
-        Right subst -> Right $ closeOver $ apply subst ty
+        Right subst ->
+          let sc = closeOver $ apply subst ty
+          in Right (sc, ex')
 
 constraintsExpr :: Env
-                -> Expr
-                -> Either TypeError ([Constraint], Subst, Type, Scheme)
+                -> S.Expr
+                -> Either TypeError ([Constraint], Subst, Type, Scheme, C.Expr)
 constraintsExpr env ex =
   case runInfer env (infer ex) of
     Left err -> Left err
-    Right (ty, cs) ->
+    Right (ty, cs, ex') ->
       case runSolve cs of
         Left err -> Left err
-        Right subst -> Right (cs, subst, ty, sc)
+        Right subst -> Right (cs, subst, ty, sc, ex')
           where sc = closeOver $ apply subst ty
 
 closeOver :: Type -> Scheme
@@ -151,25 +155,25 @@ generalize env t = Forall as t
   where
     as = Set.toList $ ftv t `Set.difference` ftv env
 
-infer :: Expr -> Infer (Type, [Constraint])
+infer :: S.Expr -> Infer (Type, [Constraint], C.Expr)
 infer expr =
   case expr of
-    Lit (Int _) -> return (i 64, [])
-    Var x -> do
+    S.Lit (S.Int n) -> return (i 64, [], C.Lit (C.Int n))
+    S.Var x -> do
       t <- lookupEnv x
-      return (t, [])
-    App f es -> do
-      t1 <- lookupEnv f
+      return (t, [], C.Var (x, t))
+    S.App f es -> do
+      t1@(TArr retty _) <- lookupEnv f
       is <- mapM infer es
-      let (ts, cs) = unzip is
+      let (ts, cs, est) = unzip3 is
       tv <- fresh
       let t2 = TArr tv ts
-      return (tv, concat cs ++ [(t1, t2)])
-    Let bs e2s -> do
+      return (tv, concat cs ++ [(t1, t2)], C.App (f, retty) est)
+    S.Let bs e2s -> do
       env <- ask
       let (ns, e1s) = unzip bs
       i1s <- mapM infer e1s
-      let (t1s, c1s) = unzip i1s
+      let (t1s, c1s, e1st) = unzip3 i1s
       let sols = map runSolve c1s
       let errs = lefts sols
       unless (null errs) $ throwError $ head errs
@@ -183,27 +187,34 @@ infer expr =
         forM
           (zip subs e2s)
           (\(sub, e2) -> inEnv env' $ local (apply sub) (infer e2))
-      let (t2s, c2s) = unzip i2s
-      return (last t2s, concat c1s ++ concat c2s)
-    If cond tr fl -> do
-      (t1, c1) <- infer cond
-      (t2, c2) <- infer tr
-      (t3, c3) <- infer fl
-      return (t2, c1 ++ c2 ++ c3 ++ [(t1, i 1), (t2, t3)])
+      let (t2s, c2s, e2st) = unzip3 i2s
+      let nst = zip ns t2s
+      let bst = zip nst e1st
+      return (last t2s, concat c1s ++ concat c2s, C.Let bst e2st)
+    S.If cond tr fl -> do
+      (t1, c1, condt) <- infer cond
+      (t2, c2, trt) <- infer tr
+      (t3, c3, flt) <- infer fl
+      return (t2, c1 ++ c2 ++ c3 ++ [(t1, i 1), (t2, t3)], C.If condt trt flt)
 
-inferTop :: Env -> [Top] -> Either TypeError Env
-inferTop env [] = Right env
-inferTop env (Def name args body:rest) =
-  let ty@(Forall tvs (TArr _ argtys)) =
+inferTop :: Env -> [S.Top] -> Either TypeError (Env, [C.Top])
+inferTop env = inferTop' (env, [])
+
+inferTop' :: (Env, [C.Top]) -> [S.Top] -> Either TypeError (Env, [C.Top])
+inferTop' (env, tops) [] = Right (env, tops)
+inferTop' (env, tops) (S.Def name args body:rest) =
+  let ty@(Forall tvs (TArr retty argtys)) =
         fromMaybe (error $ "no declaration: " ++ name) (Env.lookup name env)
-  in let xs = zip args (map (Forall tvs) argtys)
-     in let env' = env `extends` xs
-        in let infers = map (inferExpr env') body
-           in let errs = lefts infers
-              in if not (null errs)
-                   then Left $ head errs
-                   else inferTop (extend env (name, ty)) rest
-inferTop env (Dec x ty:xs) = inferTop (env `extend` (x, ty)) xs
+  in let infers =
+           map
+             (inferExpr (env `extends` zip args (map (Forall tvs) argtys)))
+             body
+     in if not (null (lefts infers))
+          then Left $ head (lefts infers)
+          else let (_, es) = unzip $ rights infers
+               in let tops' = C.Def (name, retty) (zip args argtys) es : tops
+                  in inferTop' (env `extend` (name, ty), tops') rest
+inferTop' (env, tops) (S.Dec x ty:xs) = inferTop' (env `extend` (x, ty), tops) xs
 
 normalize :: Scheme -> Scheme
 normalize (Forall _ body) = Forall (map snd ord) (normtype body)

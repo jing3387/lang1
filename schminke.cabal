@@ -20,6 +20,7 @@ library
                      , Language.Schminke.Parser
                      , Language.Schminke.Type
                      , Language.Schminke.Env
+                     , Language.Schminke.Core
                      , Language.Schminke.Infer
                      , Language.Schminke.Pretty
                      , Language.Schminke.Codegen

@@ -95,7 +95,7 @@ instance Show TypeError where
       ]
   show (UnboundVariable a) = "not in scope: " ++ a
   show (UnificationMismatch as bs) =
-    "unification mismatch: " ++ show as ++ " " ++  show bs
+    "argument mismatch: expected " ++ show (length as) ++ ", got " ++  show (length bs)
 
 ppexpr :: Expr -> String
 ppexpr = render . ppr 0

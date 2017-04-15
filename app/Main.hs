@@ -6,7 +6,7 @@ module Main where
 import Control.Monad (void)
 import Control.Monad.Except
 import Control.Monad.IO.Class
-import qualified Data.Text.Lazy.IO as LIO
+import qualified Data.Text.Lazy.IO as TIO
 import LLVM.Analysis
 import LLVM.Context
 import LLVM.Module
@@ -25,7 +25,7 @@ liftError = runExceptT >=> either fail return
 
 process :: String -> IO ()
 process fname = do
-  contents <- LIO.readFile fname
+  contents <- TIO.readFile fname
   case parse program (takeBaseName fname) contents of
     Left err -> error $ parseErrorPretty err
     Right prog ->
@@ -45,11 +45,11 @@ process fname = do
                               prog
                       in let mod = codegen env (emptyModule fname) prog'
                          in withContext $ \context ->
-                              liftError $
-                              withModuleFromAST context mod $ \m -> do
-                                liftError $ verify m
-                                asm <- moduleLLVMAssembly m
-                                putStrLn asm
+                                 liftError $
+                                 withModuleFromAST context mod $ \m -> do
+                                   liftError $ verify m
+                                   asm <- moduleLLVMAssembly m
+                                   putStrLn asm
 
 main :: IO ()
 main = do

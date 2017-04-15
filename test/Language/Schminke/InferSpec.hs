@@ -20,23 +20,29 @@ import Language.Schminke.Type
 main :: IO ()
 main = hspec spec
 
-typeof :: String -> Scheme
-typeof input =
+typeOf :: String -> Type
+typeOf input =
   case parse expression "" (L.pack input) of
     Left err -> error $ parseErrorPretty err
     Right x ->
       case constraintsExpr Env.init x of
         Left err -> error $ show err
-        Right (_, _, _, sc) -> sc
+        Right (_, _, _, Forall _ ty) -> ty
 
-typeofProgram :: String -> Map.Map Name Scheme
-typeofProgram input =
+typeOfProgram :: String -> Map.Map Name Scheme
+typeOfProgram input =
   case parse program "" (L.pack input) of
     Left err -> error $ parseErrorPretty err
     Right prog ->
       case inferTop Env.init prog of
         Left err -> error $ show err
         Right Env.TypeEnv {Env.types = t} -> t
+
+parseType :: String -> Type
+parseType input =
+  case parse (texpr []) "" (L.pack input) of
+    Left err -> error $ parseErrorPretty err
+    Right ty -> ty
 
 parseScheme :: String -> Scheme
 parseScheme input =
@@ -49,21 +55,21 @@ spec = do
   describe "constraintsExpr" $ do
     context "when given a well-typed program" $ do
       it "should infer the type scheme of an integer" $
-        typeof "0" `shouldBe` parseScheme "() i64 ()"
+        typeOf "0" `shouldBe` parseType "i64"
       it "should infer the type scheme of the `add` operation" $
-        typeof "(add 1 2)" `shouldBe` parseScheme "() i64 ()"
+        typeOf "(add 1 2)" `shouldBe` parseType "i64"
       it "should infer the type scheme of `eq` operation" $
-        typeof "(eq 0 1)" `shouldBe` parseScheme "() i1 ()"
+        typeOf "(eq 0 1)" `shouldBe` parseType "i1"
     context "when given an ill-typed program" $ do
       it "should not infer a type scheme when there is a type error" $
-        evaluate (typeof "(add (eq 1 0) 1)") `shouldThrow` anyErrorCall
+        evaluate (typeOf "(add (eq 1 0) 1)") `shouldThrow` anyErrorCall
       it "should not infer a type scheme when a variable is unbound" $
-        evaluate (typeof "y") `shouldThrow` anyErrorCall
+        evaluate (typeOf "y") `shouldThrow` anyErrorCall
       it "should not infer a type scheme when given an infinite type" $
         pendingWith "Have to figure out an example now that `lambda` is gone"
   describe "inferTop" $
     it "should infer the type of the factorial function" $
-      typeofProgram
+    typeOfProgram
       "(declare f () i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))" Map.!
-      "f" `shouldBe`
-      parseScheme "() i64 (i64)"
+    "f" `shouldBe`
+    parseScheme "() i64 (i64)"

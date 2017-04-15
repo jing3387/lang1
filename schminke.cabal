@@ -24,6 +24,7 @@ library
                      , Language.Schminke.Pretty
                      , Language.Schminke.Codegen
                      , Language.Schminke.Emit
+                     , Language.Schminke.Eval
   other-modules:       Language.Schminke.Lexer
   build-depends:       base >= 4.7 && < 5
                      , mtl
@@ -46,6 +47,7 @@ executable schminke-exe
                      , mtl
                      , repline
                      , megaparsec
+                     , llvm-hs
   default-language:    Haskell2010
 
 test-suite schminke-test
@@ -54,6 +56,7 @@ test-suite schminke-test
   main-is:             Spec.hs
   other-modules:       Language.Schminke.ParserSpec
                      , Language.Schminke.InferSpec
+                     , Language.Schminke.EvalSpec
   build-depends:       base
                      , schminke
                      , containers

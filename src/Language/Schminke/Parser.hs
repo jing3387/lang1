@@ -3,14 +3,15 @@ module Language.Schminke.Parser
   , program
   , top
   , scheme
+  , texpr
   ) where
 
 import Control.Monad (mzero)
 import qualified Data.Text.Lazy as L
+import Prelude hiding (sum)
 import Text.Megaparsec
 import Text.Megaparsec.Expr
 import Text.Megaparsec.Text.Lazy
-import Prelude hiding (sum)
 
 import Language.Schminke.Lexer
 import Language.Schminke.Syntax as Syntax
@@ -92,7 +93,7 @@ tv x@(TV s) = do
 
 tvar :: [TVar] -> Parser Type
 tvar tvs = do
-  x <- foldr (\x p -> x <|> p) mzero (map tv tvs)
+  x <- foldr ((<|>) . tv) mzero tvs
   return $ TVar x
 
 tarr :: [TVar] -> Parser Type
@@ -120,7 +121,9 @@ tref tvs = do
   return $ TRef elemty
 
 texpr :: [TVar] -> Parser Type
-texpr tvs = try (tvar tvs) <|> tcon <|> parens (tsum tvs <|> tpro tvs <|> tref tvs <|> tarr tvs)
+texpr tvs =
+  try (tvar tvs) <|> tcon <|>
+  parens (tsum tvs <|> tpro tvs <|> tref tvs <|> tarr tvs)
 
 scheme :: Parser Scheme
 scheme = do
@@ -128,8 +131,4 @@ scheme = do
   let tvs' = map TV tvs
   retty <- texpr tvs'
   argtys <- parens $ many $ texpr tvs'
-  return $ Forall tvs'
-            (if null argtys
-              then retty
-              else TArr retty argtys)
-
+  return $ Forall tvs' (TArr retty argtys)

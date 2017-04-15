@@ -17,9 +17,7 @@ data Type
   | TRef Type
   deriving (Show, Eq, Ord)
 
-data Scheme =
-  Forall [TVar]
-         Type
+data Scheme = Forall [TVar] Type
   deriving (Show, Eq, Ord)
 
 i :: Integer -> Type
@@ -27,7 +25,7 @@ i n = TCon ("i" ++ show n)
 
 sum :: Type -> Type -> Type
 sum (TSum t1a t1b) (TSum t2a t2b) =
-  foldr1 TSum (nub $ [t1a, t1b, t2a, t2b])
+  foldr1 TSum (nub [t1a, t1b, t2a, t2b])
 sum s@(TSum t1a t1b) t2 =
   if t2 `elem` [t1a, t1b] || t2 == s
     then s
@@ -43,10 +41,10 @@ sum t1 t2 =
 
 prims :: [(Name, Scheme)]
 prims =
-  [ ( "eq", Forall [TV "a"] (TArr (i 1) [(TVar (TV "a")), (TVar (TV "a"))]))
-  , ( "add", Forall [] (TArr (i 64) [(i 64), (i 64)]))
-  , ( "sub", Forall [] (TArr (i 64) [(i 64), (i 64)]))
-  , ( "mul", Forall [] (TArr (i 64) [(i 64), (i 64)]))
-  , ( "sdiv", Forall [] (TArr (i 64) [(i 64), (i 64)]))
-  , ( "srem", Forall [] (TArr (i 64) [(i 64), (i 64)]))
+  [ ( "eq", Forall [TV "a"] (TArr (i 1) [i 64, i 64]))
+  , ( "add", Forall [] (TArr (i 64) [i 64, i 64]))
+  , ( "sub", Forall [] (TArr (i 64) [i 64, i 64]))
+  , ( "mul", Forall [] (TArr (i 64) [i 64, i 64]))
+  , ( "sdiv", Forall [] (TArr (i 64) [i 64, i 64]))
+  , ( "srem", Forall [] (TArr (i 64) [i 64, i 64]))
   ]

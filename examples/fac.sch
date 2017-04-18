@@ -5,7 +5,8 @@
       1
       (mul n (fac (sub n 1)))))
 
-;; Return the 5th factorial as a status code.
+;; Return the 5th factorial. Can't go any higher because we're returning a
+;; status code.
 (declare main () i64 ())
 (define main ()
   (fac 5))

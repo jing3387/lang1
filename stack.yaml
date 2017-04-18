@@ -43,6 +43,22 @@ extra-deps:
   - llvm-hs-4.0.1.0
   - llvm-hs-pure-4.0.0.0
   - repline-0.1.6.0
+  - megaparsec-5.2.0
+  - mtl-2.2.1
+  - parsec-3.1.11
+  - text-1.2.2.1
+  - transformers-compat-0.5.1.4
+  - utf8-string-1.0.1.1
+  - QuickCheck-2.9.2
+  - exceptions-0.8.3
+  - scientific-0.3.4.12
+  - hashable-1.2.6.0
+  - integer-logarithms-1.0.1
+  - random-1.1
+  - stm-2.4.4.1
+  - tf-random-0.5
+  - vector-0.12.0.1
+  - primitive-0.6.2.0
 
 # Override default flag values for local packages and extra-deps
 flags: {}
@@ -67,3 +83,22 @@ extra-package-dbs: []
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
+
+nix:
+  # `true` by default when the nix section is present. Set
+  # it to `false` to disable using Nix.
+  enable: false
+
+  # Empty by default. The list of packages you want to be
+  # available in the nix-shell at build time (with `stack
+  # build`) and run time (with `stack exec`).
+  #packages: []
+
+  # Unset by default. You cannot set this option if `packages:`
+  # is already present and not empty, this will result in an
+  # exception
+  shell-file: shell.nix
+
+  # A list of strings, empty by default. Additional options that
+  # will be passed verbatim to the `nix-shell` command.
+  nix-shell-options: []

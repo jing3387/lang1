@@ -2,7 +2,7 @@
 
 EXE=sch
 DIR="$BATS_TEST_DIRNAME/examples"
-LLI=lli-4.0
+LLI=lli
 
 @test "returns an integer" {
         run bash -c "${EXE} "$DIR/int.sch" | ${LLI}"

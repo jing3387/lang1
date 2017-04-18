@@ -15,32 +15,45 @@ come about that C will have an enjoyable time interfacing with Schminke.
   or Unicode symbol, can contain digits thereafter
 * `(define <symbol> (<symbol>*) <expr>*)`: define a function; requires a
   corresponding declaration; definitions can refer to later definitions
-  allowing for mutual recursion
+  allowing for mutual recursion.
 * `(declare <symbol> <symbol>* <type> <type>*)`: declare the type of a
   function; required for all definitions as they serve as a means of
   documentation.
 * `(let ((<symbol> <expr>)*) <expr>*)`: introduce local variables; variables
   are bound to expressions sequentially meaning that later bindings can refer
   to earlier bindings but not vice versa.
-* `(if <expr> <expr> <expr>)`: the basic conditional
-* `(<symbol> <expr>*)`: call a function with zero or more arguments
+* `(if <expr> <expr> <expr>)`: the basic conditional.
+* `(<symbol> <expr>*)`: call a function with zero or more arguments.
 
 ## Examples
 Examples can be found in `examples/`.
 
 ## Dependencies
-* [stack](http://haskellstack.org/)
-* [llvm](http://llvm.org/), specifically version 4.0.
-* [bats](https://github.com/sstephenson/bats)
+* [Stack](http://haskellstack.org/)
+* [LLVM 4.0.0](http://llvm.org/)
+
+### Testing
+* [BATS](https://github.com/sstephenson/bats)
+
+### Nix
+If you have Nix installed simply pass `--nix` to Stack commands to resolve
+dependencies. Nix is disabled by default to support nixless users.
+
+Note: because you basically need LLVM for processing Schminke's output and BATS
+for testing the executable you'll need to install them in your environment:
+
+```
+$ nix-env -i llvm_4 bats
+```
 
 ## Testing
 To test the assembler run:
-```bash
+```
 $ stack test
 ```
 
 To test the resulting executable run:
-```bash
+```
 $ stack install
 $ bats test.bats
 ```
@@ -54,5 +67,7 @@ example would be piping the output of Schminke to the LLVM interpreter:
 
 ```bash
 $ stack install
-$ sch <file> | lli-4.0
+$ sch examples/fac.sch | lli-4.0
+$ echo $?
+120
 ```

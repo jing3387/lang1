@@ -7,7 +7,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Jarrod Jeffrey Ingram
 maintainer:          jarrod.jeffi@gmail.com
-copyright:           Copyright Jarrod Jeffrey Ingram (c) 2017
+copyright:           Copyright (c) 2017, Jarrod Jeffrey Ingram
 category:            Language, Compiler
 build-type:          Simple
 extra-source-files:  README.md

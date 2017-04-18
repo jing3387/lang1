@@ -45,10 +45,12 @@ reservedWords = ["declare", "define", "if", "let"]
 reservedTypes :: [String]
 reservedTypes = ["union", "struct", "*"]
 
+-- Single characters or symbols are reserved for type variables. Parametric
+-- polymorphism being a possible extension.
 typeId :: Parser String
 typeId = (lexeme . try) (p >>= check)
   where
-    p = (:) <$> identStart <*> many identLetter
+    p = (:) <$> identStart <*> some identLetter
     check x =
       if x `elem` reservedTypes
         then fail $ show x ++ " cannot be a type variable"

@@ -86,49 +86,29 @@ tcon = do
   x <- typeId
   return $ TCon x
 
-tv :: TVar -> Parser TVar
-tv x@(TV s) = do
-  reserved s
-  return x
-
-tvar :: [TVar] -> Parser Type
-tvar tvs = do
-  x <- foldr ((<|>) . tv) mzero tvs
-  return $ TVar x
-
-tarr :: [TVar] -> Parser Type
-tarr tvs = do
-  retty <- texpr tvs
-  argtys <- parens $ many $ texpr tvs
+tarr :: Parser Type
+tarr = do
+  retty <- texpr
+  argtys <- parens $ many $ texpr
   return $ TArr retty argtys
 
-tsum :: [TVar] -> Parser Type
-tsum tvs = do
-  reserved "union"
-  elemtys <- some $ texpr tvs
-  return $ foldr1 sum elemtys
-
-tpro :: [TVar] -> Parser Type
-tpro tvs = do
+tpro :: Parser Type
+tpro = do
   reserved "struct"
-  elemtys <- some $ texpr tvs
+  elemtys <- some $ texpr
   return $ foldr1 TPro elemtys
 
-tref :: [TVar] -> Parser Type
-tref tvs = do
+tref :: Parser Type
+tref = do
   reserved "*"
-  elemty <- texpr tvs
+  elemty <- texpr
   return $ TRef elemty
 
-texpr :: [TVar] -> Parser Type
-texpr tvs =
-  try (tvar tvs) <|> tcon <|>
-  parens (tsum tvs <|> tpro tvs <|> tref tvs <|> tarr tvs)
+texpr :: Parser Type
+texpr = tcon <|> parens (tpro <|> tref <|> tarr)
 
 scheme :: Parser Scheme
 scheme = do
-  tvs <- parens $ many identifier
-  let tvs' = map TV tvs
-  retty <- texpr tvs'
-  argtys <- parens $ many $ texpr tvs'
-  return $ Forall tvs' (TArr retty argtys)
+  retty <- texpr
+  argtys <- parens $ many $ texpr
+  return $ Forall [] (TArr retty argtys)

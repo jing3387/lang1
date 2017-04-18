@@ -40,7 +40,7 @@ typeOfProgram input =
 
 parseType :: String -> Type
 parseType input =
-  case parse (texpr []) "" (L.pack input) of
+  case parse texpr "" (L.pack input) of
     Left err -> error $ parseErrorPretty err
     Right ty -> ty
 
@@ -66,18 +66,17 @@ spec = do
       it "should not infer a type scheme when a variable is unbound" $
         evaluate (typeOf "y") `shouldThrow` anyErrorCall
       it "should not infer a type scheme when given an infinite type" $
-        evaluate (typeOfProgram "(declare f (a) (a a)) (define f (a) (a a))") `shouldThrow`
-        anyErrorCall
+        pendingWith "Need to think of an example without type variables."
       it "should not infer a type scheme when there's an argument mismatch" $
         evaluate (typeOf "(mul 1)") `shouldThrow` anyErrorCall
   describe "inferTop" $ do
     it "should infer the type of the factorial function" $
       typeOfProgram
-        "(declare f () i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))" Map.!
+        "(declare f i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1)))))" Map.!
       "f" `shouldBe`
-      parseScheme "() i64 (i64)"
+      parseScheme "i64 (i64)"
     it "should infer the type of the the main function" $
       typeOfProgram
-        "(declare f () i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1))))) (declare main () i64 ()) (define main () (f 5))" Map.!
+        "(declare f i64 (i64)) (define f (n) (if (eq n 0) 1 (mul n (f (sub n 1))))) (declare main i64 ()) (define main () (f 5))" Map.!
       "main" `shouldBe`
-      parseScheme "() i64 ()"
+      parseScheme "i64 ()"

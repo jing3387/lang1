@@ -25,6 +25,7 @@ library
                      , Language.Schminke.Pretty
                      , Language.Schminke.Codegen
                      , Language.Schminke.Emit
+                     , Language.Schminke.Subst
   other-modules:       Language.Schminke.Lexer
   build-depends:       base >= 4.7 && < 5
                      , mtl

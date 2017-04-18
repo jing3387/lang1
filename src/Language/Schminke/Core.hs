@@ -27,3 +27,13 @@ data Top
   deriving (Show, Eq, Ord)
 
 type Program = [Top]
+
+definitions :: [Top] -> [Top]
+definitions [] = []
+definitions (def@Def {}:rest) = def : definitions rest
+definitions (_:rest) = definitions rest
+
+declarations :: [Top] -> [Top]
+declarations [] = []
+declarations (dec@Dec {}:rest) = dec : declarations rest
+declarations (_:rest) = declarations rest

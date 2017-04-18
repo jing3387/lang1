@@ -215,7 +215,7 @@ inferTop' (env, tops) (S.Def name args body:rest) =
                in let tops' = C.Def (name, retty) (zip args argtys) es : tops
                   in inferTop' (env `extend` (name, ty), tops') rest
 inferTop' (env, tops) (S.Dec x ty:xs) =
-  let names = map (\(S.Def name _ _) -> name) (definitions xs)
+  let names = map (\(S.Def name _ _) -> name) (S.definitions xs)
   in if x `notElem` names
        then inferTop' (env `extend` (x, ty), C.Dec x ty : tops) xs
        else inferTop' (env `extend` (x, ty), tops) xs

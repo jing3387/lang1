@@ -1,4 +1,5 @@
 # TODO
+* Parametric polymorphism; through raw substitution for now.
 * Varargs to support `printf` and ilk.
 * Support all the [LLVM built-ins](http://llvm.org/docs/LangRef.html); which
     begs the questions, should `cbr` and `phi` be in the language even though

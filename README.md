@@ -36,8 +36,9 @@ Examples can be found in `examples/`.
 * [BATS](https://github.com/sstephenson/bats)
 
 ### Nix
-If you have Nix installed simply pass `--nix` to Stack commands to resolve
-dependencies. Nix is disabled by default to support nixless users.
+Nix is disabled by default to support nixless users. If you have Nix installed
+simply pass `--nix` to Stack commands to resolve dependencies. I personally
+have `stack` aliased to `stack --nix`.
 
 Note: because you basically need LLVM for processing Schminke's output and BATS
 for testing the executable you'll need to install them in your environment:
